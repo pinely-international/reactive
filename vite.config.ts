@@ -15,8 +15,9 @@ export default defineConfig({
     sourcemap: true,
     emptyOutDir: true,
     lib: {
-      entry: [path.resolve(__dirname, "./src/index.ts"), path.resolve(__dirname, "./src/jsx-runtime.ts")],
-      formats: ["es"]
+      entry: path.resolve(__dirname, "./src/index.ts"),
+      formats: ["es"],
+      fileName: "index"
     }
   },
   esbuild: {
