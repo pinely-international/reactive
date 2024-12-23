@@ -22,7 +22,7 @@ export class Flow<T> extends Signal<T> {
   }
 
   static compute<const States extends unknown[], U>(predicate: (...values: { [K in keyof States]: ExtractFlowable<States[K]> }) => U, states: States): Flow<U> {
-    const values = states.map(Flow.extract)
+    const values = states.map(Flow.get)
 
     const computed = new Flow(predicate(...values as never))
 
@@ -38,7 +38,21 @@ export class Flow<T> extends Signal<T> {
     return computed
   }
 
-  static extract<T>(value: Flowable<T>): T {
+  static computeRecord<T extends Record<keyof never, unknown>>(record: T): Flow<{ [K in keyof T]: ExtractFlowable<T[K]> }> {
+    const object = {} as any
+    const flow = new Flow(object)
+
+    for (const [key, value] of Object.entries(object)) {
+      const valueFlow = Flow.from(value)
+
+      object[key] = valueFlow.get()
+      valueFlow[Symbol.subscribe](it => object[key] = it)
+    }
+
+    return flow as never
+  }
+
+  static get<T>(value: Flowable<T>): T {
     if (value instanceof Object === false) return value
     if ("get" in value === false) return value
     if (Symbol.subscribe in value === false) return value
