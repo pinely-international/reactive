@@ -21,14 +21,13 @@ export class Flow<T> extends Signal<T> {
     return new Flow(item)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static compute<const States extends FlowRead<any>[], U>(predicate: (...values: { [K in keyof States]: ReturnType<States[K]["get"]> }) => U, states: States): Flow<U> {
-    const values = states.map(state => state.get())
+  static compute<const States extends unknown[], U>(predicate: (...values: { [K in keyof States]: ExtractFlowable<States[K]> }) => U, states: States): Flow<U> {
+    const values = states.map(Flow.extract)
 
     const computed = new Flow(predicate(...values as never))
 
     states.forEach((state, index) => {
-      state[Symbol.subscribe](value => {
+      Flow.from(state)[Symbol.subscribe](value => {
         if (values[index] === value) return
 
         values[index] = value
@@ -39,8 +38,16 @@ export class Flow<T> extends Signal<T> {
     return computed
   }
 
-  static for<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: FlowRead<Args[K]> }) => FlowRead<Return> {
-    return (...args) => Flow.compute(fn, args).readonly()
+  static extract<T>(value: Flowable<T>): T {
+    if (value instanceof Object === false) return value
+    if ("get" in value === false) return value
+    if (Symbol.subscribe in value === false) return value
+
+    return value.get()
+  }
+
+  static for<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: Flowable<Args[K]> }) => FlowRead<Return> {
+    return (...args) => Flow.compute(fn, args as never).readonly()
   }
 
 
@@ -148,6 +155,10 @@ export class Flow<T> extends Signal<T> {
 }
 
 export type Flowable<T> = T | Flow<T> | FlowRead<T>
+export type ExtractFlowable<T> =
+  T extends Flow<unknown> ? ReturnType<T["get"]> :
+  T extends FlowRead<unknown> ? ReturnType<T["get"]> :
+  T
 
 export type FlowRead<T> = AccessorGet<T> & Observable<T>
 export type FlowWrite<T> = AccessorSet<T>
@@ -178,3 +189,6 @@ export abstract class FlowWriteonly<T> {
     this.messager.dispatch(value)
   }
 }
+
+
+Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
