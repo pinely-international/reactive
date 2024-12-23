@@ -39,7 +39,7 @@ export class Flow<T> extends Signal<T> {
     return computed
   }
 
-  static overload<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: FlowRead<Args[K]> }) => FlowRead<Return> {
+  static for<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: FlowRead<Args[K]> }) => FlowRead<Return> {
     return (...args) => Flow.compute(fn, args).readonly()
   }
 
