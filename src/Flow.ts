@@ -50,9 +50,10 @@ export class Flow<T> extends Signal<T> {
       const valueFlow = Flow.from(value)
 
       result[key] = valueFlow.get()
-      valueFlow[Symbol.subscribe](it => result[key] = it)
-
-      recordFlow.set({ ...result })
+      valueFlow[Symbol.subscribe](it => {
+        result[key] = it
+        recordFlow.set(result)
+      })
     }
 
     return recordFlow as never
