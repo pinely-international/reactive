@@ -52,7 +52,7 @@ export class Flow<T> extends Signal<T> {
       result[key] = valueFlow.get()
       valueFlow[Symbol.subscribe](it => result[key] = it)
 
-      recordFlow.set(result)
+      recordFlow.set({ ...result })
     }
 
     return recordFlow as never
