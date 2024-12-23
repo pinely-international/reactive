@@ -21,6 +21,10 @@ export class Flow<T> extends Signal<T> {
     return new Flow(item)
   }
 
+  static all<const T extends FlowRead<unknown>[]>(flows: T): Flow<{ [K in keyof T]: ExtractFlowable<T[K]> }> {
+    return Flow.compute((...values) => values, flows)
+  }
+
   static compute<const States extends unknown[], U>(predicate: (...values: { [K in keyof States]: ExtractFlowable<States[K]> }) => U, states: States): Flow<U> {
     const values = states.map(Flow.get)
 
@@ -205,4 +209,5 @@ export abstract class FlowWriteonly<T> {
 }
 
 
-Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
+// Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
+// Flow.all([new Flow(""), new Flow(1)])
