@@ -51,6 +51,8 @@ export class Flow<T> extends Signal<T> {
 
       object[key] = valueFlow.get()
       valueFlow[Symbol.subscribe](it => object[key] = it)
+
+      flow.set(object)
     }
 
     return flow as never
