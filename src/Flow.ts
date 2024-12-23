@@ -32,8 +32,6 @@ export class Flow<T> extends Signal<T> {
 
     states.forEach((state, index) => {
       Flow.from(state)[Symbol.subscribe](value => {
-        if (values[index] === value) return
-
         values[index] = value
         computed.set(predicate(...values as never))
       })
@@ -52,7 +50,7 @@ export class Flow<T> extends Signal<T> {
       result[key] = valueFlow.get()
       valueFlow[Symbol.subscribe](it => {
         result[key] = it
-        recordFlow.set(result)
+        recordFlow.set({ ...result })
       })
     }
 
