@@ -39,6 +39,10 @@ export class Flow<T> extends Signal<T> {
     return computed
   }
 
+  static overload<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: FlowRead<Args[K]> }) => FlowRead<Return> {
+    return (...args) => Flow.compute(fn, args).readonly()
+  }
+
 
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
   sets(callback: (value: T) => void): Unsubscribe
@@ -143,7 +147,7 @@ export class Flow<T> extends Signal<T> {
   readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = this.nonNullable
 }
 
-export type Flowable<T> = T | Flow<T>
+export type Flowable<T> = T | Flow<T> | FlowRead<T>
 
 export type FlowRead<T> = AccessorGet<T> & Observable<T>
 export type FlowWrite<T> = AccessorSet<T>
