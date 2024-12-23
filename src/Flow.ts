@@ -115,7 +115,10 @@ export class Flow<T> extends Signal<T> {
 
       return propertyFlow
     }
-  }) as unknown as NonNullable<{ [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }>
+  }) as unknown as (
+      T extends (null | undefined) ? NonNullable<T> :
+      { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }
+    )
 
   get it() { return this.value }
   set it(value: T) { this.set(value) }
@@ -212,3 +215,4 @@ export abstract class FlowWriteonly<T> {
 
 // Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
 // Flow.all([new Flow(""), new Flow(1)])
+// new Flow<{a:1} | null>(null).$.a
