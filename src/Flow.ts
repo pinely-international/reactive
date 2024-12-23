@@ -43,19 +43,19 @@ export class Flow<T> extends Signal<T> {
   }
 
   static computeRecord<T extends Record<keyof never, unknown>>(record: T): Flow<{ [K in keyof T]: ExtractFlowable<T[K]> }> {
-    const object = {} as any
-    const flow = new Flow(object)
+    const result = {} as any
+    const recordFlow = new Flow(result)
 
-    for (const [key, value] of Object.entries(object)) {
+    for (const [key, value] of Object.entries(record)) {
       const valueFlow = Flow.from(value)
 
-      object[key] = valueFlow.get()
-      valueFlow[Symbol.subscribe](it => object[key] = it)
+      result[key] = valueFlow.get()
+      valueFlow[Symbol.subscribe](it => result[key] = it)
 
-      flow.set(object)
+      recordFlow.set(result)
     }
 
-    return flow as never
+    return recordFlow as never
   }
 
   static get<T>(value: Flowable<T>): T {
