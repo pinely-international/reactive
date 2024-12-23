@@ -86,7 +86,7 @@ export class Flow<T> extends Signal<T> {
       const cached = this.$ProxyCache[key as keyof T]
       if (cached != null) return cached
 
-      const property = target.value[key as keyof T]
+      const property = target.value?.[key as keyof T]
       if (property instanceof Function) {
         const method = (...args: unknown[]) => {
           const result = property.apply(target.value, args)
@@ -110,12 +110,12 @@ export class Flow<T> extends Signal<T> {
         return method
       }
 
-      const propertyFlow = target.to(value => value[key as keyof T])
+      const propertyFlow = target.to(value => value?.[key as keyof T])
       this.$ProxyCache[key as keyof T] = propertyFlow
 
       return propertyFlow
     }
-  }) as unknown as { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }
+  }) as unknown as NonNullable<{ [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }>
 
   get it() { return this.value }
   set it(value: T) { this.set(value) }
