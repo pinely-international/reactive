@@ -71,7 +71,7 @@ export class Flow<T> extends Signal<T> {
   }
 
   static f(strings: TemplateStringsArray, ...values: unknown[]): Flow<string> {
-    return Flow.compute((...values) => strings.map((string, i) => string + String(values[i])).join(""), values)
+    return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
   }
 
 
