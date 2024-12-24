@@ -138,10 +138,6 @@ export class Flow<T> extends Signal<T> {
   readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = this.nonNullable
 }
 
-export class FlowBoolean extends Flow<boolean> {
-  toggle() { this.set(it => !it) }
-}
-
 export type Flowable<T> = T | Flow<T> | FlowRead<T>
 export type ExtractFlowable<T> =
   T extends Flow<unknown> ? ReturnType<T["get"]> :
