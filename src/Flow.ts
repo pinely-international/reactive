@@ -1,4 +1,5 @@
 import { Messager } from "./Messages"
+import createReactiveAccessor from "./ReactiveAccessor"
 import { Signal } from "./Signal"
 import { AccessorSet, AccessorGet, Guarded, Observable, Unsubscribe } from "./types"
 
@@ -79,46 +80,7 @@ export class Flow<T> extends Signal<T> {
   }
   copy(other: AccessorGet<T>) { this.set(other.get()) }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly $ProxyCache: Partial<Record<keyof T, unknown>> = {}
-  readonly $ = new Proxy(this, {
-    get: (target, key) => {
-      const cached = this.$ProxyCache[key as keyof T]
-      if (cached != null) return cached
-
-      const property = target.value?.[key as keyof T]
-      if (property instanceof Function) {
-        const method = (...args: unknown[]) => {
-          const result = property.apply(target.value, args)
-          // Method resulting with itself usually means it was updated.
-          if (result === target.value) {
-            target.messager.dispatch(target.value)
-            return target
-          }
-
-          const predicate = (value: T) => property.apply(value, args)
-          const fork = new Flow(result)
-          // Follows `this.to` method implementation from here.
-          this[Symbol.subscribe](value => {
-            const newValue = predicate(value)
-            newValue !== fork.value && fork.set(newValue)
-          })
-          return fork
-        }
-        this.$ProxyCache[key as keyof T] = method
-
-        return method
-      }
-
-      const propertyFlow = target.to(value => value?.[key as keyof T])
-      this.$ProxyCache[key as keyof T] = propertyFlow
-
-      return propertyFlow
-    }
-  }) as unknown as (
-      T extends (null | undefined) ? NonNullable<T> :
-      { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }
-    )
+  readonly $ = createReactiveAccessor(this)
 
   get it() { return this.value }
   set it(value: T) { this.set(value) }
@@ -174,6 +136,10 @@ export class Flow<T> extends Signal<T> {
   readonly nullable: Guarded<T | null | undefined, T | null | undefined> & FlowRead<T> = this.guard(value => value == null)
   readonly nonNullable: Guarded<T & {}, T> & FlowRead<T & {}> = this.guard(value => value != null) as never
   readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = this.nonNullable
+}
+
+export class FlowBoolean extends Flow<boolean> {
+  toggle() { this.set(it => !it) }
 }
 
 export type Flowable<T> = T | Flow<T> | FlowRead<T>
