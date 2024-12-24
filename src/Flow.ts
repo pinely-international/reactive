@@ -70,6 +70,10 @@ export class Flow<T> extends Signal<T> {
     return (...args) => Flow.compute(fn, args as never).readonly()
   }
 
+  static f(strings: TemplateStringsArray, ...values: unknown[]): Flow<string> {
+    return Flow.compute((...values) => strings.map((string, i) => string + String(values[i])).join(""), values)
+  }
+
 
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
   sets(callback: (value: T) => void): Unsubscribe
@@ -178,3 +182,4 @@ export abstract class FlowWriteonly<T> {
 // Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
 // Flow.all([new Flow(""), new Flow(1)])
 // new Flow<{a:1} | null>(null).$.a
+Flow.f`my book: ${new Flow(1)}`
