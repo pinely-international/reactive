@@ -34,8 +34,9 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
       }
 
       const propertyFlow = target.to(value => value?.[key as keyof T])
-      cache[key as keyof T] = propertyFlow
+      propertyFlow[Symbol.subscribe](it => targetValue[key as keyof T] = it!)
 
+      cache[key as keyof T] = propertyFlow
       return propertyFlow
     }
   }) as unknown as (
