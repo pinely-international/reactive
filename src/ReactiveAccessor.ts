@@ -8,7 +8,8 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
       const cached = cache[key as keyof T]
       if (cached != null) return cached
 
-      const targetValue = target.get()
+      let targetValue = target.get()
+      target[Symbol.subscribe](it => targetValue = it)
 
       const property = targetValue?.[key as keyof T]
       if (property instanceof Function) {
@@ -34,11 +35,11 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
       }
 
       const propertyFlow = target.to(value => value?.[key as keyof T])
-      // propertyFlow[Symbol.subscribe](it => {
-      //   if (targetValue[key as keyof T] === it) return
-      //   targetValue[key as keyof T] = it!
-      //   target.set(targetValue) // Triggers notifications.
-      // })
+      propertyFlow[Symbol.subscribe](it => {
+        if (targetValue[key as keyof T] === it) return
+        targetValue[key as keyof T] = it!
+        target.set(targetValue) // Triggers notifications.
+      })
 
       cache[key as keyof T] = propertyFlow
       return propertyFlow
