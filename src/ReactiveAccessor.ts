@@ -14,10 +14,9 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
       if (property instanceof Function) {
         const method = (...args: unknown[]) => {
           const result = property.apply(targetValue, args)
-          // Method resulting with itself usually means it was updated.
-          if (result === targetValue) {
-            target.set(targetValue)
-            return target
+          if (result === targetValue) { // Method resulting with itself implies it was changed.
+            target.set(targetValue) // Triggers notifications.
+            return target // As result was the same value, no need for copy.
           }
 
           const predicate = (value: T) => property.apply(value, args)
