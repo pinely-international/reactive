@@ -93,7 +93,9 @@ export class Flow<T> extends Signal<T> {
     const fork = new Flow(predicate(this.value))
     this[Symbol.subscribe](value => {
       const newValue = predicate(value)
-      newValue !== fork.value && fork.set(newValue)
+      if (newValue === fork.value) return
+
+      fork.set(newValue)
     })
     return fork
   }
