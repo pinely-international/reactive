@@ -44,7 +44,7 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
 
       target[Symbol.subscribe](value => {
         const newPropertyValue = value?.[key as keyof T]
-        if (newPropertyValue === propertyFlow.get()) return
+        // if (newPropertyValue === propertyFlow.get()) return
 
         propertyFlow.set(newPropertyValue)
       })
