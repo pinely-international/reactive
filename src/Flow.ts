@@ -51,7 +51,7 @@ export class Flow<T> extends Signal<T> {
       result[key] = valueFlow.get()
       valueFlow[Symbol.subscribe](it => {
         result[key] = it
-        recordFlow.set({ ...result })
+        recordFlow.set(result)
       })
     }
 
@@ -106,6 +106,10 @@ export class Flow<T> extends Signal<T> {
     this.sets(fork)
 
     return fork
+  }
+
+  await(): Awaited<T> {
+    const awaited = new Flow()
   }
 
   fork() { new Flow(this.get()) }
