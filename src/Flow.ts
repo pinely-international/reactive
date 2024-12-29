@@ -74,6 +74,20 @@ export class Flow<T> extends Signal<T> {
     return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
   }
 
+  static flat<T>(value: T): FlowFlatten<T> {
+    let pure = value
+    const flow = new Flow({})
+
+    while (pure instanceof Object && "get" in pure && Symbol.subscribe in pure) {
+      pure[Symbol.subscribe](() => flow.messager.dispatch(flow.value))
+      pure = value.get()
+    }
+
+    flow.value = pure
+
+    return flow
+  }
+
 
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
   sets(callback: (value: T) => void): Unsubscribe
@@ -192,4 +206,8 @@ export abstract class FlowWriteonly<T> {
 // Flow.compute((a, b) => a + b, [new Flow(""), new Flow(1), 1, 2, "", { a: 1 }])
 // Flow.all([new Flow(""), new Flow(1)])
 // new Flow<{a:1} | null>(null).$.a
-Flow.f`my book: ${new Flow(1)}`
+// Flow.f`my book: ${new Flow(1)}`
+
+type FlowFlatten<T> = T extends FlowRead<infer U> ? FlowFlatten<U> : T
+
+// Flow.flat(new Flow(new Flow(new Flow(""))))
