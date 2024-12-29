@@ -114,6 +114,10 @@ export class Flow<T> extends Signal<T> {
     const awaited = new Flow()
   }
 
+
+
+  protected toJSON() { return this.value }
+
   fork() { new Flow(this.get()) }
   clone() {
     const cloned = new Flow(this.get())
