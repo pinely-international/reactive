@@ -183,6 +183,8 @@ export abstract class FlowReadonly<T> {
     this.messager.dispatch(value)
   }
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
+
+  protected toJSON() { return this.value }
 }
 export abstract class FlowWriteonly<T> {
   protected value: T
@@ -196,6 +198,8 @@ export abstract class FlowWriteonly<T> {
     this.value = value
     this.messager.dispatch(value)
   }
+
+  protected toJSON() { }
 }
 
 
