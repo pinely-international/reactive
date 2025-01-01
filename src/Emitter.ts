@@ -3,6 +3,7 @@ import { Subscriptable } from "./types"
 export class Emitter<EventMap extends Record<EventName, unknown>, EventName extends keyof EventMap = keyof EventMap> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private callbacks: Partial<Record<keyof never, Set<(value: any) => void>>> = {}
+  private callbacksAny = new Set<(value: this) => void>()
 
   private on<Event extends keyof EventMap>(event: Event, callback: (value: EventMap[Event]) => void) {
     this.callbacks[event] ??= new Set
@@ -33,6 +34,7 @@ export class Emitter<EventMap extends Record<EventName, unknown>, EventName exte
 
   public dispatch<Event extends keyof EventMap>(event: Event, payload: EventMap[Event]) {
     this.callbacks[event]?.forEach(callback => callback(payload))
+    this.callbacksAny.forEach(callback => callback(this))
   }
   public observe<Event extends keyof EventMap>(event: Event): Subscriptable<EventMap[Event]> {
     return {
@@ -43,6 +45,11 @@ export class Emitter<EventMap extends Record<EventName, unknown>, EventName exte
         return { unsubscribe: () => this.off(event, callback) }
       }
     }
+  }
+
+  public subscribe(next: (value: this) => void) {
+    this.callbacksAny.add(next)
+    return { unsubscribe: () => void this.callbacksAny.delete(next) }
   }
 
   protected toJSON() { }
