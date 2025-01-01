@@ -14,4 +14,6 @@ export class Signal<T> {
     this.messager.dispatch(value)
   }
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
+
+  protected toJSON() { return this.value }
 }

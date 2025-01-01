@@ -44,4 +44,6 @@ export class Emitter<EventMap extends Record<EventName, unknown>, EventName exte
       }
     }
   }
+
+  protected toJSON() { }
 }

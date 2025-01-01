@@ -15,6 +15,8 @@ export class Messager<T> {
 
     return { unsubscribe }
   }
+
+  protected toJSON() { }
 }
 
 /**
