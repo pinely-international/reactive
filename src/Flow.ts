@@ -59,11 +59,10 @@ export class Flow<T> extends Signal<T> {
   }
 
   static get<T>(value: Flowable<T>): T {
-    if (value instanceof Object === false) return value
-    if ("get" in value === false) return value
-    if (Symbol.subscribe in value === false) return value
-
-    return value.get()
+    return isFlowRead(value) ? value.get() : value
+  }
+  static getDeep<T>(value: T): FlowFlatten<T> {
+    return (isFlowRead(value) ? Flow.getDeep(value.get()) : value) as never
   }
 
   static for<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: Flowable<Args[K]> }) => FlowRead<Return> {
@@ -74,18 +73,25 @@ export class Flow<T> extends Signal<T> {
     return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
   }
 
-  static flat<T>(value: T): FlowFlatten<T> {
-    let pure = value
-    const flow = new Flow({})
+  flat(value: T): FlowFlatten<T> {
+    if (!isFlowRead(value)) return value
 
-    while (pure instanceof Object && "get" in pure && Symbol.subscribe in pure) {
-      pure[Symbol.subscribe](() => flow.messager.dispatch(flow.value))
-      pure = value.get()
+    let next: unknown = value
+
+    const flow = new Flow({})
+    while (isFlowRead(next)) {
+      next[Symbol.subscribe](it => {
+        const v = getDeep(it)
+        if (v === flow.get()) return
+
+        flow.set(v)
+      })
+      next = next.get()
     }
 
-    flow.value = pure
-
-    return flow
+    flow.value = next
+    flow.sets(it => value.set(value.get()))
+    return flow as never
   }
 
 
@@ -211,3 +217,8 @@ export abstract class FlowWriteonly<T> {
 type FlowFlatten<T> = T extends FlowRead<infer U> ? FlowFlatten<U> : T
 
 // Flow.flat(new Flow(new Flow(new Flow(""))))
+
+/** @internal */
+function isFlowRead(value: unknown): value is FlowRead<unknown> {
+  return value instanceof Object && "get" in value && Symbol.subscribe in value
+}
