@@ -2,6 +2,7 @@ import { Messager } from "./Messages"
 import createReactiveAccessor from "./ReactiveAccessor"
 import { Signal } from "./Signal"
 import { AccessorSet, AccessorGet, Guarded, Observable, Unsubscribe } from "./types"
+import { isFlowRead } from "./utils"
 
 
 export class Flow<T> extends Signal<T> {
@@ -98,9 +99,9 @@ export class Flow<T> extends Signal<T> {
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
   sets(callback: (value: T) => void): Unsubscribe
   sets<U>(arg: AccessorSet<T | U> | ((value: T) => void)): Unsubscribe {
-    const set = arg instanceof Function ? arg : arg.set
-
-    return this[Symbol.subscribe](value => set(value))
+    return this[Symbol.subscribe](value => {
+      arg instanceof Function ? arg(value) : arg.set(value)
+    })
   }
   copy(other: AccessorGet<T>) { this.set(other.get()) }
 
@@ -217,8 +218,3 @@ export abstract class FlowWriteonly<T> {
 type FlowFlatten<T> = T extends FlowRead<infer U> ? FlowFlatten<U> : T
 
 // Flow.flat(new Flow(new Flow(new Flow(""))))
-
-/** @internal */
-function isFlowRead(value: unknown): value is FlowRead<unknown> {
-  return value instanceof Object && "get" in value && Symbol.subscribe in value
-}
