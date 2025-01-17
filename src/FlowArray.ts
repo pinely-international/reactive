@@ -3,7 +3,7 @@ import { Signal } from "./Signal"
 import { isFlowRead } from "./utils"
 
 
-export class FlowArray<T> extends Signal<T[]> {
+export class FlowArray<T> extends Signal<T[]> implements Iterable<T> {
   constructor(init?: Flowable<T[]>) {
     if (isFlowRead(init)) {
       super(init.get())
@@ -29,8 +29,16 @@ export class FlowArray<T> extends Signal<T[]> {
     return index
   }
 
+  map<U>(predicate: (value: T, index: number, array: T[]) => U): FlowArray<U> {
+    const mapped = new FlowArray(this.value.map(predicate))
+    this[Symbol.subscribe](value => mapped.set(value.map(predicate)))
+    return mapped
+  }
+
   delete(index: number) {
     this.value.splice(index, 1)
     this.messager.dispatch(this.value)
   }
+
+  *[Symbol.iterator]() { yield* this.value }
 }
