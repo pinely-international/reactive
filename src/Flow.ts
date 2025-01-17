@@ -74,26 +74,26 @@ export class Flow<T> extends Signal<T> {
     return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
   }
 
-  flat(value: T): FlowFlatten<T> {
-    if (!isFlowRead(value)) return value
+  // flat(value: T): FlowFlatten<T> {
+  //   if (!isFlowRead(value)) return value
 
-    let next: unknown = value
+  //   let next: unknown = value
 
-    const flow = new Flow({})
-    while (isFlowRead(next)) {
-      next[Symbol.subscribe](it => {
-        const v = getDeep(it)
-        if (v === flow.get()) return
+  //   const flow = new Flow({})
+  //   while (isFlowRead(next)) {
+  //     next[Symbol.subscribe](it => {
+  //       const v = getDeep(it)
+  //       if (v === flow.get()) return
 
-        flow.set(v)
-      })
-      next = next.get()
-    }
+  //       flow.set(v)
+  //     })
+  //     next = next.get()
+  //   }
 
-    flow.value = next
-    flow.sets(it => value.set(value.get()))
-    return flow as never
-  }
+  //   flow.value = next
+  //   flow.sets(it => value.set(value.get()))
+  //   return flow as never
+  // }
 
 
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
@@ -129,10 +129,6 @@ export class Flow<T> extends Signal<T> {
     this.sets(fork)
 
     return fork
-  }
-
-  await(): Awaited<T> {
-    const awaited = new Flow()
   }
 
   fork() { new Flow(this.get()) }
