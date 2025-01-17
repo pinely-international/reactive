@@ -13,9 +13,11 @@ export class FlowArray<T> extends Signal<T[]> {
     }
   }
 
-  at(index: number): Flow<T> {
-    const indexFlow = Flow.from(this.value[index])
-    this[Symbol.subscribe](value => indexFlow.set(value[index]))
+  at(index: Flowable<number>): Flow<T> {
+    const indexFlow = Flow.from(this.value[Flow.get(index)])
+
+    if (isFlowRead(index)) index[Symbol.subscribe](i => indexFlow.set(this.value[i]))
+    this[Symbol.subscribe](value => indexFlow.set(value[Flow.get(index)]))
 
     return indexFlow
   }
