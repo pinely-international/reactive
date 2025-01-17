@@ -175,8 +175,8 @@ export type FlowRead<T> = AccessorGet<T> & Observable<T>
 export type FlowWrite<T> = AccessorSet<T>
 
 export abstract class FlowReadonly<T> {
-  private value: T
-  private messager = new Messager<T>
+  protected value: T
+  protected messager = new Messager<T>
 
   constructor(initialValue: T) { this.value = initialValue }
 
