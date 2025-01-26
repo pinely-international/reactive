@@ -1,12 +1,8 @@
 {
   "type": "module",
   "name": "@denshya/flow",
-  "version": "0.1.43",
+  "version": "0.2.0",
   "private": false,
-  "publishConfig": {
-    "access": "restricted",
-    "registry": "https://npm.pkg.github.com/denshya"
-  },
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
