@@ -36,6 +36,7 @@
     "type": "git",
     "url": "git+https://github.com/denshya/flow.git"
   },
+  "description": "Light-weight Observable Structures for modeling data Flow",
   "keywords": [
     "state",
     "signal",
