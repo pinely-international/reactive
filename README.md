@@ -29,7 +29,7 @@ app.$.user.$.name[Symbol.subscribe](it => console.log(it)) // Follows `app.user.
 app.$.user === app.$.user // true
 
 // Shorter access
-app.it // { user: { name: "test" } }
+app.it // { user: { name: "test" } } // Alias for `app.get`.
 app.it = { user: { name: "cool" } } // Alias for `app.set`. It will trigger updates for any `$` accessed properties.
 ```
 
@@ -42,15 +42,15 @@ const array = new FlowArray([1,2,3])
 array[Symbol.subscribe](it => console.log(it)) // Follows `array` changes.
 
 array.set([1,2,3,4])
-array.push(5)
-array.at(2) // Returns another observable that reflects the value at desired index.
+array.push(5) // Triggers update.
+array.at(2) // Returns an observable that reflects the value at desired index.
 
 // `index` can also be observable.
 const index = new Flow(1)
 array.at(index)
 
-array.delete(2)
-console.log(array.get()) // [1,2,4]
+array.delete(2) // Triggers update.
+console.log(array.get()) // [1,2,4,5]
 ```
 
 ## `FlowModel`
