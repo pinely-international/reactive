@@ -74,6 +74,8 @@ export class Flow<T> extends Signal<T> {
     return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
   }
 
+  static lock(flow: Flow<unknown>): Disposable { }
+
   // flat(value: T): FlowFlatten<T> {
   //   if (!isFlowRead(value)) return value
 
@@ -95,7 +97,6 @@ export class Flow<T> extends Signal<T> {
   //   return flow as never
   // }
 
-
   sets<U>(other: AccessorSet<T | U>): Unsubscribe
   sets(callback: (value: T) => void): Unsubscribe
   sets<U>(arg: AccessorSet<T | U> | ((value: T) => void)): Unsubscribe {
@@ -104,6 +105,16 @@ export class Flow<T> extends Signal<T> {
     })
   }
   copy(other: AccessorGet<T>) { this.set(other.get()) }
+
+  /** 
+   * Disables propagation until the lock is disposed.
+   * 
+   * @example
+   * state.sets(it => {
+   *   using lock = Flow.lock(state)
+   * })
+   */
+  lock(): Disposable { }
 
   readonly $ = createReactiveAccessor(this)
 
@@ -185,6 +196,7 @@ export abstract class FlowReadonly<T> {
     this.value = value
     this.messager.dispatch(value)
   }
+
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
 
   protected toJSON() { return this.value }
