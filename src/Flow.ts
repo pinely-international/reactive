@@ -45,7 +45,7 @@ export class Flow<T> extends Signal<T> {
    */
   lock(): Disposable { }
 
-  readonly $ = createReactiveAccessor(this)
+  readonly $ = /* @__PURE__ */ createReactiveAccessor(this)
 
   get it() { return this.value }
   set it(value: T) { this.set(value) }
@@ -90,8 +90,8 @@ export class Flow<T> extends Signal<T> {
   is<U extends T>(predicate: (value: T) => value is U): FlowRead<boolean> {
     return { get: () => predicate(this.get()), [Symbol.subscribe]: next => this[Symbol.subscribe](value => next(predicate(value))) }
   }
-  readonly isNullish: FlowRead<boolean> = this.is(value => value == null)
-  readonly isNotNullish: FlowRead<boolean> = this.is(value => value != null)
+  readonly isNullish: FlowRead<boolean> = /* @__PURE__ */ this.is(value => value == null)
+  readonly isNotNullish: FlowRead<boolean> =/* @__PURE__ */ this.is(value => value != null)
 
   guard<U extends T>(predicate: (value: T) => boolean): Guarded<U, T> & FlowRead<T>
   guard<U extends T>(predicate: (value: T) => value is U): Guarded<U, T> & FlowRead<T> {
@@ -100,9 +100,9 @@ export class Flow<T> extends Signal<T> {
 
     return guardedState
   }
-  readonly nullable: Guarded<T | null | undefined, T | null | undefined> & FlowRead<T> = this.guard(value => value == null)
-  readonly nonNullable: Guarded<T & {}, T> & FlowRead<T & {}> = this.guard(value => value != null) as never
-  readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = this.nonNullable
+  readonly nullable: Guarded<T | null | undefined, T | null | undefined> & FlowRead<T> = /* @__PURE__ */ this.guard(value => value == null)
+  readonly nonNullable: Guarded<T & {}, T> & FlowRead<T & {}> = /* @__PURE__ */ this.guard(value => value != null) as never
+  readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = /* @__PURE__ */ this.nonNullable
 }
 
 export namespace Flow {
