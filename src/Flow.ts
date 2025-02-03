@@ -2,80 +2,9 @@ import { Messager } from "./Messages"
 import createReactiveAccessor from "./ReactiveAccessor"
 import { Signal } from "./Signal"
 import { AccessorSet, AccessorGet, Guarded, Observable, Unsubscribe } from "./types"
-import { isFlowRead } from "./utils"
 
 
 export class Flow<T> extends Signal<T> {
-  static of<T>(items: (T | Flow<T>)[]): Flow<T>[] {
-    return items.map(Flow.from)
-  }
-
-  static from<T>(item: T | Flow<T> | FlowRead<T>): Flow<T> {
-    if (item instanceof Flow) return item
-    if (item instanceof Object && ("get" in item) && (Symbol.subscribe in item)) {
-      const fork = new Flow(item.get())
-
-      item[Symbol.subscribe](value => fork.set(value))
-
-      return fork
-    }
-
-    return new Flow(item)
-  }
-
-  static all<const T extends FlowRead<unknown>[]>(flows: T): Flow<{ [K in keyof T]: ExtractFlowable<T[K]> }> {
-    return Flow.compute((...values) => values, flows)
-  }
-
-  static compute<const States extends unknown[], U>(predicate: (...values: { [K in keyof States]: ExtractFlowable<States[K]> }) => U, states: States): Flow<U> {
-    const values = states.map(Flow.get)
-
-    const computed = new Flow(predicate(...values as never))
-
-    states.forEach((state, index) => {
-      Flow.from(state)[Symbol.subscribe](value => {
-        values[index] = value
-        computed.set(predicate(...values as never))
-      })
-    })
-
-    return computed
-  }
-
-  static computeRecord<T extends Record<keyof never, unknown>>(record: T): Flow<{ [K in keyof T]: ExtractFlowable<T[K]> }> {
-    const result = {} as any
-    const recordFlow = new Flow(result)
-
-    for (const [key, value] of Object.entries(record)) {
-      const valueFlow = Flow.from(value)
-
-      result[key] = valueFlow.get()
-      valueFlow[Symbol.subscribe](it => {
-        result[key] = it
-        recordFlow.set(result)
-      })
-    }
-
-    return recordFlow as never
-  }
-
-  static get<T>(value: Flowable<T>): T {
-    return isFlowRead(value) ? value.get() : value
-  }
-  static getDeep<T>(value: T): FlowFlatten<T> {
-    return (isFlowRead(value) ? Flow.getDeep(value.get()) : value) as never
-  }
-
-  static for<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: Flowable<Args[K]> }) => FlowRead<Return> {
-    return (...args) => Flow.compute(fn, args as never).readonly()
-  }
-
-  static f(strings: TemplateStringsArray, ...values: unknown[]): Flow<string> {
-    return Flow.compute((...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""), values)
-  }
-
-  static lock(flow: Flow<unknown>): Disposable { }
-
   // flat(value: T): FlowFlatten<T> {
   //   if (!isFlowRead(value)) return value
 
@@ -174,6 +103,25 @@ export class Flow<T> extends Signal<T> {
   readonly nullable: Guarded<T | null | undefined, T | null | undefined> & FlowRead<T> = this.guard(value => value == null)
   readonly nonNullable: Guarded<T & {}, T> & FlowRead<T & {}> = this.guard(value => value != null) as never
   readonly required: Guarded<T & {}, T> & FlowRead<T & {}> = this.nonNullable
+}
+
+export namespace Flow {
+  export function of<T>(items: (T | Flow<T>)[]): Flow<T>[] {
+    return items.map(Flow.from)
+  }
+
+  export function from<T>(item: T | Flow<T> | FlowRead<T>): Flow<T> {
+    if (item instanceof Flow) return item
+    if (item instanceof Object && ("get" in item) && (Symbol.subscribe in item)) {
+      const fork = new Flow(item.get())
+
+      item[Symbol.subscribe](value => fork.set(value))
+
+      return fork
+    }
+
+    return new Flow(item)
+  }
 }
 
 export type Flowable<T> = T | Flow<T> | FlowRead<T>
