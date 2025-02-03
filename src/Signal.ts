@@ -23,7 +23,7 @@ export class Signal<T> {
 }
 
 export namespace Signal {
-  export const all = <const T extends FlowRead<unknown>[]>(flows: T): Signal<{ [K in keyof T]: ExtractFlowable<T[K]> }> => {
+  export const all = <const T extends unknown[]>(flows: T): Signal<{ [K in keyof T]: ExtractFlowable<T[K]> }> => {
     return Signal.compute((...values) => values, flows)
   }
 
