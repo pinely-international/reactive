@@ -106,11 +106,11 @@ export class Flow<T> extends Signal<T> {
 }
 
 export namespace Flow {
-  export function of<T>(items: (T | Flow<T>)[]): Flow<T>[] {
+  export const of = <T>(items: (T | Flow<T>)[]): Flow<T>[] => {
     return items.map(Flow.from)
   }
 
-  export function from<T>(item: T | Flow<T> | FlowRead<T>): Flow<T> {
+  export const from = <T>(item: T | Flow<T> | FlowRead<T>): Flow<T> => {
     if (item instanceof Flow) return item
     if (item instanceof Object && ("get" in item) && (Symbol.subscribe in item)) {
       const fork = new Flow(item.get())
