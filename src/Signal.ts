@@ -1,4 +1,4 @@
-import { ExtractFlowable, Flowable, FlowRead } from "./Flow"
+import { ExtractFlowable, Flowable } from "./Flow"
 import { Messager } from "./Messages"
 import { isFlowRead } from "./utils"
 
@@ -49,7 +49,10 @@ export namespace Signal {
     const recordFlow = new Signal(result)
 
     for (const [key, value] of Object.entries(record)) {
-      if (isFlowRead(value) === false) continue
+      if (isFlowRead(value) === false) {
+        result[key] = value
+        continue
+      }
 
       result[key] = value.get()
       value[Symbol.subscribe](it => {
