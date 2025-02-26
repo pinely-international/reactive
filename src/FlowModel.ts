@@ -1,4 +1,5 @@
 import { FlowReadonly } from "./Flow"
+import { isObservableLike, subscribe } from "./utils"
 
 export class FlowModel<T> extends FlowReadonly<T> {
   commit() {
@@ -9,15 +10,19 @@ export class FlowModel<T> extends FlowReadonly<T> {
 export namespace FlowModel {
   export function Collection<T extends FlowModel<unknown>>(target: new (...args: unknown[]) => T): any {
     return function (...args: any[]) {
-      const instance = new target(...args)
+      const model = new target(...args)
+      const modelState = model.get() as any
 
-      for (const key of Object.keys(instance.get())) {
-        instance[key]?.[Symbol.subscribe]?.(value => {
-          instance.get()[key] = value
-          instance.commit()
+      for (const key of Object.keys(modelState)) {
+        const modelProperty = (model as any)[key]
+        if (isObservableLike(modelProperty)) return
+
+        subscribe(modelProperty, propertyValue => {
+          modelState[key] = propertyValue
+          model.commit()
         })
       }
-      return instance
+      return model
     }
   }
 }

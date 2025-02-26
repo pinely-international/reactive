@@ -1,12 +1,19 @@
 import { ExtractFlowable, Flowable } from "./Flow"
 import { Messager } from "./Messages"
-import { isFlowRead } from "./utils"
+import { isObservableLike, subscribe } from "./utils"
+import { RefReadonly } from "./ValueReference"
 
-export class Signal<T> {
+
+export class Signal<T> implements RefReadonly<T> {
   protected messager = new Messager<T>
   protected value: T
 
+  get current() { return this.value }
+
   constructor(initialValue: T) { this.value = initialValue }
+
+  // /** Besides simply returning current value, subscribe */
+  // spy(): T { }
 
   get(): T { return this.value }
   set(newValue: T | ((current: T) => T)): void {
@@ -33,9 +40,9 @@ export namespace Signal {
     const computed = new Signal(predicate(...values as never))
 
     states.forEach((state, index) => {
-      if (isFlowRead(state) === false) return
+      if (isObservableLike(state) === false) return
 
-      state[Symbol.subscribe](value => {
+      subscribe(state, value => {
         values[index] = value
         computed.set(predicate(...values as never))
       })
@@ -49,13 +56,13 @@ export namespace Signal {
     const recordFlow = new Signal(result)
 
     for (const [key, value] of Object.entries(record)) {
-      if (isFlowRead(value) === false) {
+      if (isObservableLike(value) === false) {
         result[key] = value
         continue
       }
 
       result[key] = value.get()
-      value[Symbol.subscribe](it => {
+      subscribe(value, it => {
         result[key] = it
         recordFlow.set(result)
       })
@@ -65,7 +72,7 @@ export namespace Signal {
   }
 
   export const get = <T>(value: Flowable<T>): T => {
-    return isFlowRead(value) ? value.get() : value
+    return isObservableLike(value) ? value.get() : value
   }
 
   export const f = (strings: TemplateStringsArray, ...values: unknown[]): Signal<string> => {
@@ -76,3 +83,9 @@ export namespace Signal {
     return (...args) => Signal.compute(fn, args as never)
   }
 }
+
+// export namespace Signal.closure {
+//   export function effect(closure: () => void) {
+
+//   }
+// }

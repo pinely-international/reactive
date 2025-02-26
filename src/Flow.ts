@@ -1,54 +1,38 @@
 import { Messager } from "./Messages"
 import createReactiveAccessor from "./ReactiveAccessor"
 import { Signal } from "./Signal"
-import { AccessorSet, AccessorGet, Guarded, Observable, Unsubscribe } from "./types"
+import { AccessorGet, AccessorSet, Guarded, Observable, Subscriptable, Unsubscribe } from "./types"
+import { isObservableLike, subscribe } from "./utils"
+import { Ref } from "./ValueReference"
+
+
+
 
 
 export class Flow<T> extends Signal<T> {
-  // flat(value: T): FlowFlatten<T> {
-  //   if (!isFlowRead(value)) return value
-
-  //   let next: unknown = value
-
-  //   const flow = new Flow({})
-  //   while (isFlowRead(next)) {
-  //     next[Symbol.subscribe](it => {
-  //       const v = getDeep(it)
-  //       if (v === flow.get()) return
-
-  //       flow.set(v)
-  //     })
-  //     next = next.get()
-  //   }
-
-  //   flow.value = next
-  //   flow.sets(it => value.set(value.get()))
-  //   return flow as never
-  // }
-
-  sets<U>(other: AccessorSet<T | U>): Unsubscribe
-  sets(callback: (value: T) => void): Unsubscribe
-  sets<U>(arg: AccessorSet<T | U> | ((value: T) => void)): Unsubscribe {
-    return this[Symbol.subscribe](value => {
-      arg instanceof Function ? arg(value) : arg.set(value)
-    })
+  sets<U>(other: AccessorSet<T | U>): Unsubscribe {
+    return this.messager.subscribe(value => other.set(value))
   }
-  copy(other: AccessorGet<T>) { this.set(other.get()) }
+  copy(other: Ref<T> | AccessorGet<T>) {
+    if ("current" in other) {
+      this.set(other.current)
+      return
+    }
 
-  /** 
-   * Disables propagation until the lock is disposed.
-   * 
-   * @example
-   * state.sets(it => {
-   *   using lock = Flow.lock(state)
-   * })
-   */
-  lock(): Disposable { }
+    this.set(other.get())
+  }
+
+  // /** 
+  //  * Disables propagation until the lock is disposed.
+  //  * 
+  //  * @example
+  //  * state.sets(it => {
+  //  *   using lock = Flow.lock(state)
+  //  * })
+  //  */
+  // lock(): Disposable { }
 
   readonly $ = /* @__PURE__ */ createReactiveAccessor(this)
-
-  get it() { return this.value }
-  set it(value: T) { this.set(value) }
 
   to<U>(predicate: (value: T) => U): Flow<U> {
     const fork = new Flow(predicate(this.value))
@@ -79,16 +63,16 @@ export class Flow<T> extends Signal<T> {
   }
 
   readonly(): FlowRead<T> {
-    return { get: () => this.get(), [Symbol.subscribe]: next => this[Symbol.subscribe](next) }
+    return { get: () => this.value, [Symbol.subscribe]: next => this[Symbol.subscribe](next) }
   }
 
   writeonly(): FlowWrite<T> {
-    return { set: v => this.set(v) }
+    return { set: value => this.set(value) }
   }
 
   is(predicate: (value: T) => boolean): FlowRead<boolean>
   is<U extends T>(predicate: (value: T) => value is U): FlowRead<boolean> {
-    return { get: () => predicate(this.get()), [Symbol.subscribe]: next => this[Symbol.subscribe](value => next(predicate(value))) }
+    return { get: () => predicate(this.value), [Symbol.subscribe]: next => this[Symbol.subscribe](value => next(predicate(value))) }
   }
   readonly isNullish: FlowRead<boolean> = /* @__PURE__ */ this.is(value => value == null)
   readonly isNotNullish: FlowRead<boolean> =/* @__PURE__ */ this.is(value => value != null)
@@ -112,10 +96,10 @@ export namespace Flow {
 
   export const from = <T>(item: T | Flow<T> | FlowRead<T>): Flow<T> => {
     if (item instanceof Flow) return item
-    if (item instanceof Object && ("get" in item) && (Symbol.subscribe in item)) {
+    if (isObservableLike(item)) {
       const fork = new Flow(item.get())
 
-      item[Symbol.subscribe](value => fork.set(value))
+      subscribe(item, value => fork.set(value))
 
       return fork
     }
@@ -130,7 +114,7 @@ export type ExtractFlowable<T> =
   T extends FlowRead<unknown> ? ReturnType<T["get"]> :
   T
 
-export type FlowRead<T> = AccessorGet<T> & Observable<T>
+export type FlowRead<T> = AccessorGet<T> & (Observable<T> | Subscriptable<T>)
 export type FlowWrite<T> = AccessorSet<T>
 
 export abstract class FlowReadonly<T> {
@@ -171,6 +155,6 @@ export abstract class FlowWriteonly<T> {
 // new Flow<{a:1} | null>(null).$.a
 // Flow.f`my book: ${new Flow(1)}`
 
-type FlowFlatten<T> = T extends FlowRead<infer U> ? FlowFlatten<U> : T
+// type FlowFlatten<T> = T extends FlowRead<infer U> ? FlowFlatten<U> : T
 
 // Flow.flat(new Flow(new Flow(new Flow(""))))

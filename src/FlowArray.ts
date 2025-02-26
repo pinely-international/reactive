@@ -1,13 +1,13 @@
 import { Flow, Flowable } from "./Flow"
 import { Signal } from "./Signal"
-import { isFlowRead } from "./utils"
+import { isObservableLike, subscribe } from "./utils"
 
 
 export class FlowArray<T> extends Signal<T[]> implements Iterable<T> {
   constructor(init?: Flowable<T[]>) {
-    if (isFlowRead(init)) {
+    if (isObservableLike(init)) {
       super(init.get())
-      init[Symbol.subscribe](value => this.set(value))
+      subscribe(init, value => this.set(value))
     } else {
       super(init ?? [])
     }
@@ -16,7 +16,7 @@ export class FlowArray<T> extends Signal<T[]> implements Iterable<T> {
   at(index: Flowable<number>): Flow<T> {
     const indexFlow = new Flow(this.value[Flow.get(index)])
 
-    if (isFlowRead(index)) index[Symbol.subscribe](i => indexFlow.set(this.value[i]))
+    if (isObservableLike(index)) subscribe(index, i => indexFlow.set(this.value[i]))
     this[Symbol.subscribe](value => indexFlow.set(value[Flow.get(index)]))
 
     return indexFlow

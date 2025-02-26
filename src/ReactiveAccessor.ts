@@ -1,7 +1,6 @@
 import { Flow } from "./Flow"
 
 function createReactiveAccessor<T>(instance: Flow<T>) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cache: Partial<Record<keyof T, unknown>> = {}
   return new Proxy(instance, {
     get: (target, key) => {

@@ -7,7 +7,7 @@ State Observable library.
 ```ts
 const balance = new Flow(120)
 balance.set(680)
-balance[Symbol.subscribe](it => console.log(it)) // Follows `balance` changes.
+balance.subscribe(it => console.log(it)) // Follows `balance` changes.
 
 const another = new Flow(1)
 another.sets(balance) // Will set to balance on each update.
@@ -23,14 +23,11 @@ console.log(balance.get()) // 999
 const app = new Flow({ user: { name: "test" } })
 // Regular Access
 app.get().user.name
+app.current.user.name
 // Observable Access
-app.$.user.$.name[Symbol.subscribe](it => console.log(it)) // Follows `app.user.name` changes.
+app.$.user.$.name.subscribe(it => console.log(it)) // Follows `app.user.name` changes.
 // Usage of `$` is cached and an observable for accessed property only created when first accessed.
 app.$.user === app.$.user // true
-
-// Shorter access
-app.it // { user: { name: "test" } } // Alias for `app.get`.
-app.it = { user: { name: "cool" } } // Alias for `app.set`. It will trigger updates for any `$` accessed properties.
 ```
 
 ## `FlowArray`
@@ -39,7 +36,7 @@ An array representation of `Flow`, it has more convenient `at` and `push` method
 
 ```ts
 const array = new FlowArray([1,2,3])
-array[Symbol.subscribe](it => console.log(it)) // Follows `array` changes.
+array.subscribe(it => console.log(it)) // Follows `array` changes.
 
 array.set([1,2,3,4])
 array.push(5) // Triggers update.
@@ -100,7 +97,7 @@ export interface CharacterEventSerialized {
 
 ## `Signal`
 
-Straightforward implementation of basically Observable Accessor. It has only `set`, `get` and `Symbol.subscribe` methods.
+Straightforward implementation of basically Observable Accessor. It has only `set`, `get` and `subscribe` (`Symbol.subscribe`) methods.
 
 ## `Messager`
 
