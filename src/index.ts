@@ -7,3 +7,5 @@ export * from "./FlowModel"
 export * from "./Signal"
 export * from "./Emitter"
 export * from "./Messages"
+
+export * from "./ValueReference"
