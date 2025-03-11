@@ -22,15 +22,6 @@ export class Flow<T> extends Signal<T> {
     this.set(other.get())
   }
 
-  // /** 
-  //  * Disables propagation until the lock is disposed.
-  //  * 
-  //  * @example
-  //  * state.sets(it => {
-  //  *   using lock = Flow.lock(state)
-  //  * })
-  //  */
-  // lock(): Disposable { }
 
   readonly $ = /* @__PURE__ */ createReactiveAccessor(this)
 

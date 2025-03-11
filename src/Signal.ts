@@ -82,6 +82,45 @@ export namespace Signal {
   export const adapt = <Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: { [K in keyof Args]: Flowable<Args[K]> }) => Signal<Return> => {
     return (...args) => Signal.compute(fn, args as never)
   }
+
+  /** 
+   * Disables *propagation* until the lock is disposed.
+   * 
+   * @example
+   * state1.sets(state2)
+   * state1.subscribe(value => {
+   *   if (value === 1) {
+   *     using lock = Signal.lock(state2) // or Signal.lock([state2])
+   *   }
+   * 
+   *   state3.set(value)
+   * })
+   * 
+   * state2.subscribe(console.log)
+   * state3.subscribe(console.log)
+   * 
+   * state1.set(2) // Both `state2` and `state3` call `console.log`.
+   * state1.set(1) // Only `state3` calls `console.log`.
+   */
+  export function lock(signal: Signal<unknown>): Disposable
+  export function lock(signals: Signal<unknown>[]): Disposable
+  export function lock(signals: Signal<unknown> | Signal<unknown>[]): Disposable {
+    if (signals instanceof Array) {
+      signals.forEach(signal => signal.messager.locked = true)
+    } else {
+      signals.messager.locked = true
+    }
+
+    return {
+      [Symbol.dispose]: () => {
+        if (signals instanceof Array) {
+          signals.forEach(signal => signal.messager.locked = false)
+        } else {
+          signals.messager.locked = false
+        }
+      }
+    }
+  }
 }
 
 // export namespace Signal.closure {
