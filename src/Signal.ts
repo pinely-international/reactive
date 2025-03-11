@@ -12,8 +12,18 @@ export class Signal<T> implements RefReadonly<T> {
 
   constructor(initialValue: T) { this.value = initialValue }
 
-  // /** Besides simply returning current value, subscribe */
-  // spy(): T { }
+  /** 
+   * Besides returning `value`, sends itself to the capturing closure signal
+   * to act as if `Signal` is directly subscribed.
+   * 
+   * @naming `tap` stands for "tap into", which is inspired by RxJs and Lodash.
+   * 
+   * @example
+   * const state1 = new Signal(123)
+   * const state2 = new Signal(456)
+   * const state3 = Signal.capture(() => state1.use() + state2.use())
+   * */
+  use(): T { }
 
   get(): T { return this.value }
   set(newValue: T | ((current: T) => T)): void {
@@ -27,9 +37,12 @@ export class Signal<T> implements RefReadonly<T> {
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
 
   protected toJSON() { return this.value }
+  public valueOf() { return this.value }
 }
 
 export namespace Signal {
+  export function capture<T>(closure: () => T): Signal<T> { }
+
   export const all = <const T extends unknown[]>(flows: T): Signal<{ [K in keyof T]: ExtractFlowable<T[K]> }> => {
     return Signal.compute((...values) => values, flows)
   }
@@ -122,9 +135,3 @@ export namespace Signal {
     }
   }
 }
-
-// export namespace Signal.closure {
-//   export function effect(closure: () => void) {
-
-//   }
-// }

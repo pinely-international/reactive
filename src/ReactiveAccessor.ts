@@ -43,7 +43,13 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
 
       cache[key as keyof T] = propertyFlow
       return propertyFlow
-    }
+    },
+    apply(target, thisArg, argArray) {
+
+    },
+    construct(target, argArray, newTarget) {
+
+    },
   }) as unknown as (
       T extends (null | undefined) ? NonNullable<T> :
       { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }
@@ -51,3 +57,5 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
 }
 
 export default createReactiveAccessor
+
+
