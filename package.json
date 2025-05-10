@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "@denshya/flow",
+  "name": "@denshya/reactive",
   "version": "0.4.0",
   "private": false,
   "main": "build/index.js",
