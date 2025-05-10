@@ -1,7 +1,7 @@
 const finalization = new FinalizationRegistry<() => void>(unsubscribe => unsubscribe())
 
 export class Messager<T> {
-  private locked?: boolean = false
+  private locked?: boolean
   private readonly callbacks = new Set<(value: T) => void>()
 
   dispatch(value: T) {

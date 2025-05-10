@@ -1,6 +1,6 @@
-import { Flow } from "./Flow"
+import { State } from "./state/State"
 
-function createReactiveAccessor<T>(instance: Flow<T>) {
+function createReactiveSelector<T>(instance: State<T>) {
   const cache: Partial<Record<keyof T, unknown>> = {}
   return new Proxy(instance, {
     get: (target, key) => {
@@ -20,11 +20,11 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
           }
 
           const predicate = (value: T) => property.apply(value, args)
-          const fork = new Flow(result)
+          const fork = new State(result)
           // Follows `Flow.to` method implementation from here.
           instance[Symbol.subscribe](value => {
             const newValue = predicate(value)
-            newValue !== fork.get() && fork.set(newValue)
+            if (newValue !== fork.get()) fork.set(newValue)
           })
           return fork
         }
@@ -43,19 +43,14 @@ function createReactiveAccessor<T>(instance: Flow<T>) {
 
       cache[key as keyof T] = propertyFlow
       return propertyFlow
-    },
-    apply(target, thisArg, argArray) {
-
-    },
-    construct(target, argArray, newTarget) {
-
-    },
-  }) as unknown as (
-      T extends (null | undefined) ? NonNullable<T> :
-      { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => Flow<Return> : Flow<T[K]> }
-    )
+    }
+  }) as unknown as ReactiveSelector<T>
 }
 
-export default createReactiveAccessor
+export default createReactiveSelector
 
 
+export type ReactiveSelector<T> = (
+  T extends (null | undefined) ? NonNullable<T> :
+  { [K in keyof T]-?: T[K] extends (...args: infer Args) => infer Return ? (...args: Args) => State<Return> : State<T[K]> }
+)

@@ -1,7 +1,7 @@
-import { FlowReadonly } from "./Flow"
-import { isObservableLike, subscribe } from "./utils"
+import { SignalReadonly } from "./Flow"
+import { isObservableGetter, subscribe } from "./utils"
 
-export class FlowModel<T> extends FlowReadonly<T> {
+export class FlowModel<T> extends SignalReadonly<T> {
   commit() {
     this.messager.dispatch(this.value)
   }
@@ -15,7 +15,7 @@ export namespace FlowModel {
 
       for (const key of Object.keys(modelState)) {
         const modelProperty = (model as any)[key]
-        if (isObservableLike(modelProperty)) return
+        if (isObservableGetter(modelProperty)) return
 
         subscribe(modelProperty, propertyValue => {
           modelState[key] = propertyValue

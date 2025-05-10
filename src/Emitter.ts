@@ -1,7 +1,6 @@
 import { Subscriptable } from "./types"
 
 export class Emitter<EventMap extends Record<EventName, unknown>, EventName extends keyof EventMap = keyof EventMap> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private callbacks: Partial<Record<keyof never, Set<(value: any) => void>>> = {}
   private callbacksAny = new Set<(value: this) => void>()
 
