@@ -1,10 +1,14 @@
 import { Primitive } from "type-fest"
 
-import { ObservableGetter } from "@/Flow"
+import { ExtractGetable, ObservableGetter } from "@/Flow"
 import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
+import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
 import { AccessorGet, AccessorSet, Observable, Unsubscribe } from "@/types"
+import { isObservableGetter, subscribe } from "@/utils"
 import { Ref } from "@/ValueReference"
+
+import { StateOrPlain } from "./State.types"
 
 
 export class State<T> extends Signal<T> {
@@ -48,7 +52,7 @@ export class State<T> extends Signal<T> {
       return { get: () => arg1(this.value), [Symbol.subscribe]: next => this.messager.subscribe(value => next(arg1(value))) }
     }
 
-    return Signal.combine([this, arg1], (value, arg1) => value === arg1)
+    return State.combine([this, arg1], (value, arg1) => value === arg1)
   }
 
   get readonly(): AccessorGet<T> & Observable<T> {
@@ -56,5 +60,78 @@ export class State<T> extends Signal<T> {
   }
   get writeonly(): AccessorSet<T> {
     return { set: this.set.bind(this) }
+  }
+}
+
+export namespace State {
+  export function capture<T>(closure: () => T): State<T> {
+    const signal = new State<T>(null as never) // Assume it will be actually initiated before first get.
+    const signalClosure = () => signal.set(closure())
+
+    new ClosureCaptor(signalClosure).capture()
+    return signal
+  }
+
+  export function combine<const States extends unknown[], U>(states: States, predicate: (...values: {
+    [K in keyof States]: ExtractGetable<States[K]>
+  }) => U): State<U> {
+    const values = states.map(State.get)
+
+    const computed = new State(predicate(...values as never))
+
+    states.forEach((state, index) => {
+      if (isObservableGetter(state) === false) return
+
+      subscribe(state, value => {
+        values[index] = value
+        computed.set(predicate(...values as never))
+      })
+    })
+
+    return computed
+  }
+
+  export function collect<const T extends unknown[]>(array: T): State<{ [K in keyof T]: ExtractGetable<T[K]> }>
+  export function collect<T extends Record<keyof never, unknown>>(record: T): State<{ [K in keyof T]: ExtractGetable<T[K]> }>
+  export function collect(arg1: any): unknown {
+    if (arg1 instanceof Array) {
+      return State.combine(arg1, (...values) => values)
+    }
+
+    const result = {} as any
+    const recordFlow = new State(result)
+
+    for (const key of Object.keys(arg1)) {
+      const value = arg1[key]
+      if (isObservableGetter(value) === false) {
+        result[key] = value
+        continue
+      }
+
+      result[key] = value.get()
+      subscribe(value, it => {
+        result[key] = it
+        recordFlow.set(result)
+      })
+    }
+
+    return recordFlow as never
+  }
+
+  export function f(strings: TemplateStringsArray, ...values: unknown[]): State<string> {
+    return State.combine(values, (...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""))
+  }
+  export function from<T>(item: StateOrPlain<T>): State<T> {
+    if (item instanceof State) return item
+    if (isObservableGetter(item)) {
+      const state = new State<any>(item.get())
+
+      if ("subscribe" in item) item.subscribe(value => state.set(value))
+      if (Symbol.subscribe in item) item[Symbol.subscribe](value => state.set(value))
+
+      return state
+    }
+
+    return new State(State.get(item))
   }
 }

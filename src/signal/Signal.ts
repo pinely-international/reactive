@@ -1,10 +1,11 @@
-import { ClosureCaptor, ClosureParticipant } from "./ClosureSignal"
 
-import { ExtractGetable, ObservableGetter, ReactiveSource } from "../Flow"
+import { ClosureParticipant } from "./ClosureSignal"
+
+import { ObservableGetter } from "../Flow"
 import { Messager } from "../Messages"
 import { Observable, Subscriptable } from "../types"
-import { isObservableGetter, subscribe } from "../utils"
-import { RefReadonly } from "../ValueReference"
+import { isObservableGetter } from "../utils"
+import { Ref, RefReadonly } from "../ValueReference"
 
 
 export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T> {
@@ -49,15 +50,15 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
 
 export namespace Signal {
   /**
-   * Allows using plain observables within capturing closure.
-   * 
-   * @example
-   * 
-   * const observable1 = new Observable
-   * const signal2 = new Signal
-   * 
-   * Signal.capture(() => signal2.use() + Signal.use(observable1))
-   */
+ * Allows using plain observables within capturing closure.
+ * 
+ * @example
+ * 
+ * const observable1 = new Observable
+ * const signal2 = new Signal
+ * 
+ * Signal.capture(() => signal2.use() + Signal.use(observable1))
+ */
   export function use<T>(value: T | Signal<T> | ObservableGetter<T>): T {
     if (value instanceof Signal) return value.use()
     if (isObservableGetter(value)) {
@@ -72,72 +73,14 @@ export namespace Signal {
 
     return value
   }
-  export function capture<T>(closure: () => T): Signal<T> {
-    const signal = new Signal<T>(null as never) // Assume it will be actually initiated before first get.
-    const signalClosure = () => signal.set(closure())
 
-    new ClosureCaptor(signalClosure).capture()
-    return signal
-  }
-
-  export function combine<const States extends unknown[], U>(states: States, predicate: (...values: {
-    [K in keyof States]: ExtractGetable<States[K]>
-  }) => U): Signal<U> {
-    const values = states.map(Signal.get)
-
-    const computed = new Signal(predicate(...values as never))
-
-    states.forEach((state, index) => {
-      if (isObservableGetter(state) === false) return
-
-      subscribe(state, value => {
-        values[index] = value
-        computed.set(predicate(...values as never))
-      })
-    })
-
-    return computed
-  }
-
-  export function collect<const T extends unknown[]>(array: T): Signal<{ [K in keyof T]: ExtractGetable<T[K]> }>
-  export function collect<T extends Record<keyof never, unknown>>(record: T): Signal<{ [K in keyof T]: ExtractGetable<T[K]> }>
-  export function collect(arg1: any): unknown {
-    if (arg1 instanceof Array) {
-      return Signal.combine(arg1, (...values) => values)
+  export function get<T>(value: T | ObservableGetter<T> | Ref<T>): T {
+    if (value instanceof Object) {
+      if ("get" in value) return value.get()
+      if ("current" in value) return value.current
     }
 
-    const result = {} as any
-    const recordFlow = new Signal(result)
-
-    for (const key of Object.keys(arg1)) {
-      const value = arg1[key]
-      if (isObservableGetter(value) === false) {
-        result[key] = value
-        continue
-      }
-
-      result[key] = value.get()
-      subscribe(value, it => {
-        result[key] = it
-        recordFlow.set(result)
-      })
-    }
-
-    return recordFlow as never
-  }
-
-  export function get<T>(value: ReactiveSource<T>): T {
-    return isObservableGetter(value) ? value.get() : value
-  }
-
-  export function f(strings: TemplateStringsArray, ...values: unknown[]): Signal<string> {
-    return Signal.combine(values, (...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""))
-  }
-
-  export function adapt<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: {
-    [K in keyof Args]: ReactiveSource<Args[K]>
-  }) => Signal<Return> {
-    return (...args) => Signal.combine(args as never, fn)
+    return value
   }
 
   /** 
