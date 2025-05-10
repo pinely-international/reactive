@@ -40,7 +40,7 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
     this.closureParticipant.dispatch()
   }
 
-  subscribe(callback: (value: T) => void) { return this[Symbol.subscribe](callback) }
+  subscribe(callback: (value: T) => void) { return this.messager.subscribe(callback) }
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
 
   protected toJSON() { return this.value }
