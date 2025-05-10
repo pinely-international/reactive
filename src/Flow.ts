@@ -1,5 +1,4 @@
 import { Messager } from "./Messages"
-import { State } from "./state/State"
 import { AccessorGet, Observable, Subscriptable } from "./types"
 import { Ref } from "./ValueReference"
 
@@ -12,8 +11,10 @@ export type ReactiveSource<T> = T | Ref<T> | (() => T) | ObservableGetter<T>
 export type ObservableGetter<T> = AccessorGet<T> & (Observable<T> | Subscriptable<T>)
 
 export type ExtractGetable<T> =
-  T extends State<unknown> ? ReturnType<T["get"]> :
-  T extends ObservableGetter<unknown> ? ReturnType<T["get"]> :
+  T extends { get(): infer R } ? R :
+  T extends { subscribe(listener: (value: infer R) => void): unknown } ? R :
+  T extends { [Symbol.subscribe](listener: (value: infer R) => void): unknown } ? R :
+  T extends { current: infer R } ? R :
   T
 
 
