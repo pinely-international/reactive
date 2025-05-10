@@ -1,6 +1,7 @@
 import "./REQUIRED_SYMBOLS"
 
 export * from "./state/State"
+export * from "./state/State.types"
 export * from "./state/StateArray"
 export * from "./state/StateBoolean"
 

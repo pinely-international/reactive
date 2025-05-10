@@ -1,3 +1,4 @@
+import path from "path"
 import { defineConfig } from "vite"
 import { externalizeDeps } from "vite-plugin-externalize-deps"
 
@@ -7,7 +8,7 @@ export default defineConfig({
   plugins: [externalizeDeps({ peerDeps: true })],
   resolve: {
     alias: {
-      "@": "./src",
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {

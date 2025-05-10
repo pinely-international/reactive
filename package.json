@@ -32,7 +32,8 @@
     "vite": "^6.0.6",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-externalize-deps": "^0.8.0",
-    "type-fest": "^4.40.1"
+    "type-fest": "^4.40.1",
+    "@types/bun": "latest"
   },
   "repository": {
     "type": "git",
