@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@denshya/flow",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
