@@ -35,7 +35,7 @@ export class Emitter<EventMap extends Record<EventName, unknown>, EventName exte
     this.callbacks[event]?.forEach(callback => callback(payload))
     this.callbacksAny.forEach(callback => callback(this))
   }
-  public observe<Event extends keyof EventMap>(event: Event): Subscriptable<EventMap[Event]> {
+  public when<Event extends keyof EventMap>(event: Event): Subscriptable<EventMap[Event]> {
     return {
       subscribe: (next?: (value: EventMap[Event]) => void) => {
         const callback = (value: EventMap[Event]) => next?.(value)
