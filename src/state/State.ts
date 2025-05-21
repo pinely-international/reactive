@@ -70,7 +70,7 @@ export class State<T> extends Signal<T> {
 
 export namespace State {
   export function subscribeImmediate(value: unknown, callback: (value: unknown) => void, options?: ObservableOptions) {
-    if (!options?.signal?.aborted) callback(value)
+    if (!options?.signal?.aborted) callback(State.get(value))
     return State.subscribe(value, callback, options)
   }
 
@@ -135,7 +135,7 @@ export namespace State {
       const state = new State<any>(item.get())
 
       if ("subscribe" in item) item.subscribe(value => state.set(value))
-      if (Symbol.subscribe in item) item[Symbol.subscribe](value => state.set(value))
+      else if (Symbol.subscribe in item) item[Symbol.subscribe](value => state.set(value))
 
       return state
     }

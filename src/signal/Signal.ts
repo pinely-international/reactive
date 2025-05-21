@@ -58,7 +58,7 @@ export namespace Signal {
 
 
     if ("subscribe" in value) unsubscribe = value.subscribe(callback)
-    if (Symbol.subscribe in value) unsubscribe = value[Symbol.subscribe](callback)
+    else if (Symbol.subscribe in value) unsubscribe = value[Symbol.subscribe](callback)
 
 
     options?.signal?.addEventListener("abort", unsubscribe.unsubscribe)
@@ -82,7 +82,7 @@ export namespace Signal {
       anonymousParticipant.attach()
 
       if ("subscribe" in value) value.subscribe(() => anonymousParticipant.dispatch())
-      if (Symbol.subscribe in value) value[Symbol.subscribe](() => anonymousParticipant.dispatch())
+      else if (Symbol.subscribe in value) value[Symbol.subscribe](() => anonymousParticipant.dispatch())
 
       return value.get()
     }
@@ -91,6 +91,7 @@ export namespace Signal {
   }
 
   export function get<T>(value: ReactiveSource<T>): T {
+    if (value instanceof Function) return value()
     if (value instanceof Object) {
       if ("get" in value) return value.get()
       if ("current" in value) return value.current
@@ -118,23 +119,23 @@ export namespace Signal {
    * state1.set(2) // Both `state2` and `state3` call `console.log`.
    * state1.set(1) // Only `state3` calls `console.log`.
    */
-  export function lock(signal: Signal<unknown>): Disposable
-  export function lock(signals: Signal<unknown>[]): Disposable
-  export function lock(signals: Signal<unknown> | Signal<unknown>[]): Disposable {
-    if (signals instanceof Array) {
-      signals.forEach(signal => signal.messager.locked = true)
-    } else {
-      signals.messager.locked = true
-    }
+  // export function lock(signal: Signal<unknown>): Disposable
+  // export function lock(signals: Signal<unknown>[]): Disposable
+  // export function lock(signals: Signal<unknown> | Signal<unknown>[]): Disposable {
+  //   if (signals instanceof Array) {
+  //     signals.forEach(signal => signal.messager.locked = true)
+  //   } else {
+  //     signals.messager.locked = true
+  //   }
 
-    return {
-      [Symbol.dispose]: () => {
-        if (signals instanceof Array) {
-          signals.forEach(signal => signal.messager.locked = false)
-        } else {
-          signals.messager.locked = false
-        }
-      }
-    }
-  }
+  //   return {
+  //     [Symbol.dispose]: () => {
+  //       if (signals instanceof Array) {
+  //         signals.forEach(signal => signal.messager.locked = false)
+  //       } else {
+  //         signals.messager.locked = false
+  //       }
+  //     }
+  //   }
+  // }
 }
