@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@denshya/reactive",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
