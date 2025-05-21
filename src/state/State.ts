@@ -4,7 +4,7 @@ import { ExtractGetable, ObservableGetter } from "@/Flow"
 import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
 import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
-import { AccessorGet, AccessorSet, Observable, Unsubscribe } from "@/types"
+import { AccessorGet, AccessorSet, Observable, ObservableOptions, Unsubscribe } from "@/types"
 import { isObservableGetter } from "@/utils"
 import { Ref } from "@/ValueReference"
 
@@ -12,6 +12,11 @@ import { StateOrPlain } from "./State.types"
 
 
 export class State<T> extends Signal<T> {
+  subscribeImmediate(callback: (value: T) => void, options?: ObservableOptions) {
+    if (!options?.signal?.aborted) callback(this.value)
+    return this.subscribe(callback, options)
+  }
+
   sets<U>(other: AccessorSet<T | U>): Unsubscribe {
     return this.messager.subscribe(value => other.set(value))
   }
@@ -64,6 +69,11 @@ export class State<T> extends Signal<T> {
 }
 
 export namespace State {
+  export function subscribeImmediate(value: unknown, callback: (value: unknown) => void, options?: ObservableOptions) {
+    if (!options?.signal?.aborted) callback(value)
+    return State.subscribe(value, callback, options)
+  }
+
   export function capture<T>(closure: () => T): State<T> {
     const signal = new State<T>(null as never) // Assume it will be actually initiated before first get.
     const signalClosure = () => signal.set(closure())
