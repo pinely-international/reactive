@@ -1,3 +1,5 @@
+import { ObservableOptions } from "./types"
+
 const finalization = new FinalizationRegistry<() => void>(unsubscribe => unsubscribe())
 
 export class Messager<T> {
@@ -9,11 +11,12 @@ export class Messager<T> {
     this.callbacks.forEach(callback => callback(value))
   }
 
-  subscribe(next: (value: T) => void) {
+  subscribe(next: (value: T) => void, options?: ObservableOptions) {
     this.callbacks.add(next)
 
     const unsubscribe = () => void this.callbacks.delete(next)
     finalization.register(this, unsubscribe)
+    options?.signal?.addEventListener("abort", unsubscribe)
 
     return { unsubscribe }
   }

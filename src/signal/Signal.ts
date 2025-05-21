@@ -3,7 +3,7 @@ import { ClosureParticipant } from "./ClosureSignal"
 
 import { ObservableGetter } from "../Flow"
 import { Messager } from "../Messages"
-import { Observable, Subscriptable } from "../types"
+import { Observable, ObservableOptions, Subscriptable, Unsubscribe } from "../types"
 import { isObservableGetter } from "../utils"
 import { Ref, RefReadonly } from "../ValueReference"
 
@@ -40,8 +40,8 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
     this.closureParticipant.dispatch()
   }
 
-  subscribe(callback: (value: T) => void) { return this.messager.subscribe(callback) }
-  [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
+  subscribe(callback: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(callback, options) }
+  [Symbol.subscribe](next: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(next, options) }
 
   protected toJSON() { return this.value }
   protected valueOf() { return this.value }
