@@ -5,7 +5,7 @@ import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
 import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
 import { AccessorGet, AccessorSet, Observable, Unsubscribe } from "@/types"
-import { isObservableGetter, subscribe } from "@/utils"
+import { isObservableGetter } from "@/utils"
 import { Ref } from "@/ValueReference"
 
 import { StateOrPlain } from "./State.types"
@@ -52,7 +52,7 @@ export class State<T> extends Signal<T> {
       return { get: () => arg1(this.value), [Symbol.subscribe]: next => this.messager.subscribe(value => next(arg1(value))) }
     }
 
-    return State.combine([this, arg1], (value, arg1) => value === arg1)
+    return State.combine([this, arg1], (value, arg1) => value === arg1).readonly
   }
 
   get readonly(): AccessorGet<T> & Observable<T> {
@@ -80,9 +80,7 @@ export namespace State {
     const computed = new State(predicate(...values as never))
 
     states.forEach((state, index) => {
-      if (isObservableGetter(state) === false) return
-
-      subscribe(state, value => {
+      State.subscribe(state, value => {
         values[index] = value
         computed.set(predicate(...values as never))
       })
@@ -109,7 +107,7 @@ export namespace State {
       }
 
       result[key] = value.get()
-      subscribe(value, it => {
+      State.subscribe(value, it => {
         result[key] = it
         recordFlow.set(result)
       })

@@ -1,11 +1,10 @@
-
 import { ClosureParticipant } from "./ClosureSignal"
 
-import { ObservableGetter } from "../Flow"
+import { ObservableGetter, ReactiveSource } from "../Flow"
 import { Messager } from "../Messages"
-import { Observable, Subscriptable } from "../types"
-import { isObservableGetter } from "../utils"
-import { Ref, RefReadonly } from "../ValueReference"
+import { Observable, ObservableOptions, Subscriptable, Unsubscribe } from "../types"
+import { isObservableGetter, isObservableLike } from "../utils"
+import { RefReadonly } from "../ValueReference"
 
 
 export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T> {
@@ -40,8 +39,8 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
     this.closureParticipant.dispatch()
   }
 
-  subscribe(callback: (value: T) => void) { return this.messager.subscribe(callback) }
-  [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
+  subscribe(callback: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(callback, options) }
+  [Symbol.subscribe](next: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(next, options) }
 
   protected toJSON() { return this.value }
   protected valueOf() { return this.value }
@@ -49,6 +48,23 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
 
 
 export namespace Signal {
+  export function subscribe<T>(observable: ReactiveSource<T>, callback: (value: T) => void, options?: ObservableOptions): Unsubscribe
+  export function subscribe(value: unknown, callback: (value: any) => void, options?: ObservableOptions): Unsubscribe {
+    let unsubscribe: Unsubscribe = { unsubscribe: () => { } }
+
+    if (value == null) return unsubscribe
+    if (value instanceof Object === false) return unsubscribe
+    if (isObservableLike(value) === false) return unsubscribe
+
+
+    if ("subscribe" in value) unsubscribe = value.subscribe(callback)
+    if (Symbol.subscribe in value) unsubscribe = value[Symbol.subscribe](callback)
+
+
+    options?.signal?.addEventListener("abort", unsubscribe.unsubscribe)
+    return unsubscribe
+  }
+
   /**
  * Allows using plain observables within capturing closure.
  * 
@@ -74,7 +90,7 @@ export namespace Signal {
     return value
   }
 
-  export function get<T>(value: T | ObservableGetter<T> | Ref<T>): T {
+  export function get<T>(value: ReactiveSource<T>): T {
     if (value instanceof Object) {
       if ("get" in value) return value.get()
       if ("current" in value) return value.current

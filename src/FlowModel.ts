@@ -1,5 +1,6 @@
 import { SignalReadonly } from "./Flow"
-import { isObservableGetter, subscribe } from "./utils"
+import { State } from "./state/State"
+import { isObservableGetter } from "./utils"
 
 export class FlowModel<T> extends SignalReadonly<T> {
   commit() {
@@ -17,7 +18,7 @@ export namespace FlowModel {
         const modelProperty = (model as any)[key]
         if (isObservableGetter(modelProperty)) return
 
-        subscribe(modelProperty, propertyValue => {
+        State.subscribe(modelProperty, propertyValue => {
           modelState[key] = propertyValue
           model.commit()
         })

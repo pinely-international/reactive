@@ -10,12 +10,7 @@ export type StateSource<T> = T | Ref<T> | (() => T) | ObservableGetter<T>
 export type ReactiveSource<T> = T | Ref<T> | (() => T) | ObservableGetter<T>
 export type ObservableGetter<T> = AccessorGet<T> & (Observable<T> | Subscriptable<T>)
 
-export type ExtractGetable<T> =
-  T extends { get(): infer R } ? R :
-  T extends { subscribe(listener: (value: infer R) => void): unknown } ? R :
-  T extends { [Symbol.subscribe](listener: (value: infer R) => void): unknown } ? R :
-  T extends { current: infer R } ? R :
-  T
+export type ExtractGetable<T> = T extends ReactiveSource<infer R> ? R : T;
 
 
 export abstract class SignalReadonly<T> {
