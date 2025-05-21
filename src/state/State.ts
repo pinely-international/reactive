@@ -5,7 +5,7 @@ import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
 import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
 import { AccessorGet, AccessorSet, Observable, ObservableOptions, Unsubscribe } from "@/types"
-import { isObservableGetter } from "@/utils"
+import { isObservableGetter, isObservableLike } from "@/utils"
 import { Ref } from "@/ValueReference"
 
 import { StateOrPlain } from "./State.types"
@@ -70,8 +70,17 @@ export class State<T> extends Signal<T> {
 
 export namespace State {
   export function subscribeImmediate(value: unknown, callback: (value: unknown) => void, options?: ObservableOptions) {
-    if (!options?.signal?.aborted) callback(State.get(value))
-    return State.subscribe(value, callback, options)
+    const result = State.subscribe(value, callback, options)
+
+    if (options?.signal?.aborted) return result
+
+    const unwrappedValue = State.get(value)
+    if (unwrappedValue === value && unwrappedValue instanceof Object && isObservableLike(unwrappedValue)) {
+      return result
+    }
+
+    callback(unwrappedValue)
+    return result
   }
 
   export function capture<T>(closure: () => T): State<T> {
