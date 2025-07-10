@@ -19,7 +19,7 @@ console.log(balance.get()) // 999
 
 or using closure-based ones
 
-```
+```ts
 const balance1 = new State(120)
 const balance2 = new State(120)
 const balance3 = State.capture(() => balance1.use() + balance2.use()) // 240
@@ -36,7 +36,7 @@ const app = new State({ user: { name: "test" } })
 app.get().user.name
 app.current.user.name
 // Observable Access
-app.$.user.$.name.subscribe(it => console.log(it)) // Follows `app.user.name` changes.
+app.$.user.$.name.subscribe(console.log) // Logs `app.user.name` changes.
 // Usage of `$` is cached and an observable for accessed property only created when first accessed.
 app.$.user === app.$.user // true
 ```
@@ -47,7 +47,7 @@ An array representation of `State`, it has more convenient `at` and `push` metho
 
 ```ts
 const array = new StateArray([1,2,3])
-array.subscribe(it => console.log(it)) // Follows `array` changes.
+array.subscribe(console.log) // Logs `array` changes.
 
 array.set([1,2,3,4])
 array.push(5) // Triggers update.
@@ -79,6 +79,6 @@ interface Events {
 }
 
 const emitter = new Emitter
-emitter.observe("add").subscribe(it => console.log(it)) // Follows `add` events.
+emitter.observe("add").subscribe(console.log) // Logs `add` events.
 emitter.dispatch("add", 1)
 ```
