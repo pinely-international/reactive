@@ -4,7 +4,7 @@ import { ExtractGetable, ObservableGetter } from "@/Flow"
 import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
 import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
-import { AccessorGet, AccessorSet, Observable, ObservableOptions, Unsubscribe } from "@/types"
+import { AccessorGet, AccessorSet, Observable, ObservableOptions, Subscriptable, Unsubscribe } from "@/types"
 import { isObservableGetter, isObservableLike } from "@/utils"
 import { Ref } from "@/ValueReference"
 
@@ -30,7 +30,7 @@ export class State<T> extends Signal<T> {
   }
 
 
-  private _$?: ReactiveSelector<T>
+  private declare _$?: ReactiveSelector<T>
   get $() {
     if (this._$ == null) {
       this._$ = createReactiveSelector(this)
@@ -138,8 +138,18 @@ export namespace State {
   export function f(strings: TemplateStringsArray, ...values: unknown[]): State<string> {
     return State.combine(values, (...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""))
   }
+  /** Forks state. */
+  export function from<T>(item: State<T>): State<T>
+  /** Copies initial value once. */
+  export function from<T>(item: AccessorGet<T>): State<T>
+  /** Copies initial value once and subscribes to updates. */
+  export function from<T>(item: ObservableGetter<T>): State<T>
+  /** No initial value, but subscribes to future updates. */
+  export function from<T>(item: Observable<T> | Subscriptable<T>): State<T | undefined>
+  /** Copies initial value. */
+  export function from<T>(item: T): State<T>
   export function from<T>(item: StateOrPlain<T>): State<T> {
-    if (item instanceof State) return item
+    if (item instanceof State) return new State(item.get())
     if (isObservableGetter(item)) {
       const state = new State<any>(item.get())
 
@@ -148,7 +158,12 @@ export namespace State {
 
       return state
     }
+    if (isObservableLike(item)) {
+      const state = new State<T | undefined>(undefined)
+      State.subscribe(item, value => state.set(value as never))
+      return state as never
+    }
 
-    return new State(State.get(item))
+    return new State(State.get(item as T))
   }
 }

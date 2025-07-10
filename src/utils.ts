@@ -1,4 +1,5 @@
 import { ObservableGetter } from "./Flow"
+import { ObservableLike } from "./types"
 
 /** @internal */
 export function isObservableGetter(value: unknown): value is ObservableGetter<unknown> {
@@ -6,6 +7,6 @@ export function isObservableGetter(value: unknown): value is ObservableGetter<un
 }
 
 /** @internal */
-export function isObservableLike(value: object): value is ObservableGetter<unknown> {
-  return (Symbol.subscribe in value || "subscribe" in value)
+export function isObservableLike(value: unknown): value is ObservableLike<unknown> {
+  return value instanceof Object && (Symbol.subscribe in value || "subscribe" in value)
 }

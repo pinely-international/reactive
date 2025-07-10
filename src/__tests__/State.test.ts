@@ -1,3 +1,4 @@
+
 // tests/State.test.ts
 import { describe, expect, it } from "bun:test"
 
@@ -86,5 +87,24 @@ describe("State", () => {
 
     expect(a).toBe(5)
     expect(b).toBe(10)
+  })
+
+  it("should create State from state-, observable-like, plain values", () => {
+    // Plain.
+    expect(State.from(0)).toEqual(new State(0))
+    expect(State.from([])).toEqual(new State([]))
+    expect(State.from({})).toEqual(new State({}))
+    // State.
+    expect(State.from(new State({}))).toEqual(new State({}))
+    // State-like
+    expect(State.from({ get: () => ({}) })).toEqual(new State({}))
+    // Observable-like
+    const _testState = new State<object | undefined>(undefined)
+    const observableLike = { subscribe: _testState.subscribe.bind(_testState) }
+
+    const subscribeState = State.from(observableLike)
+    expect(subscribeState).toEqual(new State<object | undefined>(undefined))
+    _testState.set({ foo: "bar" })
+    expect(subscribeState).toEqual(new State<object | undefined>({ foo: "bar" }))
   })
 })
