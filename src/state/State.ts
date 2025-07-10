@@ -66,6 +66,20 @@ export class State<T> extends Signal<T> {
   get writeonly(): AccessorSet<T> {
     return { set: this.set.bind(this) }
   }
+
+  /** Captures next state value with a `Promise`. */
+  get upcoming(): Promise<T> {
+    let subscription: Unsubscribe
+
+    const promise = new Promise<T>(resolve => {
+      subscription = this.subscribe(value => {
+        resolve(value)
+        subscription.unsubscribe()
+      })
+    })
+
+    return promise
+  }
 }
 
 export namespace State {
