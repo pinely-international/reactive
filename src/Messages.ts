@@ -3,11 +3,9 @@ import { ObservableOptions } from "./types"
 const finalization = new FinalizationRegistry<() => void>(unsubscribe => unsubscribe())
 
 export class Messager<T> {
-  private locked?: boolean
   private readonly callbacks = new Set<(value: T) => void>()
 
   dispatch(value: T) {
-    if (this.locked === true) return
     this.callbacks.forEach(callback => callback(value))
   }
 
