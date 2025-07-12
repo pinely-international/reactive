@@ -7,3 +7,6 @@ export * from "./state/StateBoolean"
 
 export * from "./Emitter"
 export * from "./Messages"
+
+export * from "./signal/EventSignal"
+export * from "./signal/ClosureSignal"
