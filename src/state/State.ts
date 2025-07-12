@@ -67,7 +67,7 @@ export class State<T> extends Signal<T> {
     return { set: this.set.bind(this) }
   }
 
-  /** Captures next state value with a `Promise`. */
+  /** Captures next state value. */
   get upcoming(): Promise<T> {
     let subscription: Unsubscribe
 

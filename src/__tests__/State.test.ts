@@ -107,4 +107,14 @@ describe("State", () => {
     _testState.set({ foo: "bar" })
     expect(subscribeState).toEqual(new State<object | undefined>({ foo: "bar" }))
   })
+
+  it("should capture next value with `Promise`", async () => {
+    const state = new State(0)
+    expect(state.current).toBe(0)
+
+    setTimeout(() => state.set(1))
+
+    const upcoming = await state.upcoming
+    expect(upcoming).toBe(1)
+  })
 })
