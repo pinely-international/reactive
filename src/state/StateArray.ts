@@ -4,7 +4,7 @@ import { ReactiveSource } from "../Flow"
 import { Signal } from "../signal/Signal"
 
 
-export class StateArray<T> extends Signal<T[]> implements Iterable<T> {
+export class StateArray<T> extends State<T[]> implements Iterable<T> {
   constructor(init: ReactiveSource<T[]> = []) {
     super(Signal.get(init))
     Signal.subscribe(init, value => this.set(value))
