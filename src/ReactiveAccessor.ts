@@ -8,7 +8,7 @@ function createReactiveSelector<T>(instance: State<T>) {
       if (cached != null) return cached
 
       let targetValue = target.get()
-      target[Symbol.subscribe](it => targetValue = it)
+      target.subscribe(it => targetValue = it)
 
       const property = targetValue?.[key as keyof T]
       if (property instanceof Function) {
@@ -19,24 +19,23 @@ function createReactiveSelector<T>(instance: State<T>) {
             return target // As result was the same value, no need for copy.
           }
 
-          const predicate = (value: T) => property.apply(value, args)
-          return target.to(predicate)
+          return target.to(value => property.apply(value, args))
         }
         cache[key as keyof T] = method
 
         return method
       }
 
-      const propertyFlow = target.to(value => value?.[key as keyof T])
-      propertyFlow[Symbol.subscribe](propertyValue => {
+      const propertyState = target.to(value => value?.[key as keyof T])
+      propertyState.subscribe(propertyValue => {
         if (propertyValue === targetValue?.[key as keyof T]) return
 
         targetValue[key as keyof T] = propertyValue as never
         target.set(targetValue)
       })
 
-      cache[key as keyof T] = propertyFlow
-      return propertyFlow
+      cache[key as keyof T] = propertyState
+      return propertyState
     }
   }) as unknown as ReactiveSelector<T>
 }
