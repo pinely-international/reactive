@@ -37,6 +37,39 @@ const netWorth = State.capture(() => balance.use() - debt.use())
 
 `State` modes are **interchangeable**, so you can use both together.
 
+## Transforms
+
+### `state.to`
+
+`to` method is `map` function under a different name because `state.map(x => x.map(e => e))` seems a bit weird.
+And it looks neat as Tacit programming - `string.to(Number)`
+
+It creates a new `State` instance, transforms the value and assign it to the new instance.
+
+It is useful when you want to select a value, but save reactivity:
+
+```ts
+const ypx = new State("15px")
+const y = ypx.to(parseFloat)
+
+ypx.set("16px") // Will set `y` to `16`.
+y.set(15) // Will not affect `ypx`.
+```
+
+### `state.from`
+
+It exposes `set` method that hooks to places where Signal-like structures required
+
+It is useful when you want to fit "source" (or "sink") from where a new value is coming to a desired one:
+
+```ts
+const value = new State("text")
+const event = new State<Event>()
+event.sets(value.from(event => event.currentTarget.value))
+```
+
+This literally says "`event` sets `value` from `event.currentTarget.value`".
+
 ## Access properties
 
 ```ts

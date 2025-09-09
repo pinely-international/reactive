@@ -24,6 +24,7 @@ export class StateArray<T> extends Signal<T[]> implements Iterable<T> {
     return State.combine([this, index], (array, index) => array.at(index))
   }
 
+  /** Adds value to the end of the array and notifies subscribers. */
   push(value: T): number {
     const index = this.value.push(value)
     this.messager.dispatch(this.value)
@@ -31,6 +32,7 @@ export class StateArray<T> extends Signal<T[]> implements Iterable<T> {
     return index
   }
 
+  /** Behaves the same way that `Array` does. Transforms every value with `predicate` and create new instance of `StateArray`. */
   map<U>(predicate: (value: T, index: number, array: T[]) => U): StateArray<U> {
     const mapped = new StateArray(this.value.map(predicate))
     this.subscribe(value => mapped.set(value.map(predicate)))

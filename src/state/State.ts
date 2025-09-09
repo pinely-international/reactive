@@ -4,7 +4,7 @@ import { ExtractGetable, ObservableGetter } from "@/Flow"
 import createReactiveSelector, { ReactiveSelector } from "@/ReactiveAccessor"
 import { ClosureCaptor } from "@/signal/ClosureSignal"
 import { Signal } from "@/signal/Signal"
-import { AccessorGet, AccessorSet, Observable, ObservableOptions, Subscriptable, Unsubscribe } from "@/types"
+import { AccessorGet, AccessorSet, AccessorSetAction, Observable, ObservableOptions, Subscriptable, Unsubscribe } from "@/types"
 import { isObservableGetter, isObservableLike } from "@/utils"
 import { Ref } from "@/ValueReference"
 
@@ -12,14 +12,35 @@ import { StateOrPlain } from "./State.types"
 
 
 export class State<T> extends Signal<T> {
+  /** Subscribes to updates and immediately calls the `callback`. */
   subscribeImmediate(callback: (value: T) => void, options?: ObservableOptions) {
     if (!options?.signal?.aborted) callback(this.value)
     return this.subscribe(callback, options)
   }
 
-  sets<U>(other: AccessorSet<T | U>): Unsubscribe {
+  /**
+   * Sets value of this state to `other` one continuously.
+   * 
+   * @example
+   * ```ts
+   * const state1 = new State(123)
+   * const state2 = new State(0)
+   * state1.sets(state2)
+   * state2 // Becomes `123`.
+   * ```
+   * 
+   * @example
+   * Can be combined with `from` method
+   * ```ts
+   * const state1 = new State("123")
+   * const state2 = new State(0)
+   * state1.sets(state2.from(parseInt))
+   * ```
+   */
+  sets<U>(other: AccessorSetAction<U | T>): Unsubscribe {
     return this.messager.subscribe(value => other.set(value))
   }
+  /** Copies value from `other` Signal-like structure just once. */
   copy(other: Ref<T> | AccessorGet<T>) {
     if ("current" in other) {
       this.set(other.current)
@@ -31,6 +52,19 @@ export class State<T> extends Signal<T> {
 
 
   private declare _$?: ReactiveSelector<T>
+  /**
+   * @example
+   * ```ts
+   * const app = new State({ user: { name: "test" } })
+   * // Observable Access
+   * app.$.user.$.name instanceof State // true
+   * // Usage of `$` is cached and only created once.
+   * app.$.user === app.$.user // true
+   * // Setting to accessed property actually changes it.
+   * app.$.user.$.name.set("me")
+   * app.get().user.name === "me" // true
+   * ```
+   */
   get $() {
     if (this._$ == null) {
       this._$ = createReactiveSelector(this)
@@ -38,6 +72,23 @@ export class State<T> extends Signal<T> {
     return this._$
   }
 
+  /**
+   * `to` is an alternative name of `map` function because `state.map(x => x.map(e => e))` looks weird.
+   * But looks neat as Tacit programming - `string.to(Number)`
+   * 
+   * Creates a new instance, transforms the value and assigns it.
+   * 
+   * 
+   * @example
+   * Useful when to select a value with reactivity:
+   * ```ts
+   * const ypx = new State("15px")
+   * const y = ypx.to(parseFloat)
+   * 
+   * ypx.set("16px") // Will set `y` to `16`.
+   * y.set(15) // Will not affect `ypx`.
+   *   ```
+   */
   to<U>(predicate: (value: T) => U): State<U> {
     const fork = new State(predicate(this.value))
     this.messager.subscribe(value => {
@@ -49,6 +100,34 @@ export class State<T> extends Signal<T> {
     return fork
   }
 
+  /**
+   * Useful when you want to fit a "source" (or "sink") to the state:
+   * 
+   * @example
+   *  ```ts
+   *  const value = new State("text")
+   *  const event = new State<Event>()
+   *  event.sets(value.from(event => event.currentTarget.value))
+   *  ```
+   * 
+   * This literally says "`event` sets `value` from `event.currentTarget.value`".
+  */
+  from<U>(predicate: (value: U extends (v: infer R) => any ? R : U) => T): AccessorSet<U> {
+    return { set: value => this.set(predicate(value as never)) }
+  }
+
+  /**
+   * A semantics helper and characters saver. Always produces `boolean`.
+   * 
+   * @example
+   * const state1 = new State("asd")
+   * const state2 = new State("asd")
+   * 
+   * const same1 = state1.is("asd") // Depends on 1 state.
+   * const same2 = state1.is(state2) // Depends on 2 states.
+   * 
+   * @returns a hook to be used by another program. Is not intended to be transformed after.
+   */
   is<O extends Primitive>(other: T | O): AccessorGet<boolean> & Observable<boolean>
   is(other: ObservableGetter<unknown>): AccessorGet<boolean> & Observable<boolean>
   is(predicate: (value: T) => boolean): AccessorGet<boolean> & Observable<boolean>
@@ -97,6 +176,15 @@ export namespace State {
     return result
   }
 
+  /**
+   * Captures usage of `use`.
+   * 
+   * @example
+   * ```ts
+   * const state4 = State.capture(() => state1.use() + state2.use() + state3.get())
+   * ```
+   * `state4` only updates from `state1` and `state2`.
+   */
   export function capture<T>(closure: () => T): State<T> {
     const signal = new State<T>(null as never) // Assume it will be actually initiated before first get.
     const signalClosure = () => signal.set(closure())
@@ -105,6 +193,7 @@ export namespace State {
     return signal
   }
 
+  /** Takes Signal-like values, transforms (by `predicate`) and reduces them to the one. */
   export function combine<const States extends unknown[], U>(states: States, predicate: (...values: {
     [K in keyof States]: ExtractGetable<States[K]>
   }) => U): State<U> {
@@ -122,7 +211,15 @@ export namespace State {
     return computed
   }
 
+  /**
+   * Collects many Signal-like values from a plain array.
+   * @returns `State` of array with plain values that updates every time **any** "Signal" changes.
+   */
   export function collect<const T extends unknown[]>(array: T): State<{ [K in keyof T]: ExtractGetable<T[K]> }>
+  /**
+   * Collects many Signal-like values from a plain record (object).
+   * @returns `State` of object with plain key-values that updates every time **any** "Signal" changes.
+   */
   export function collect<T extends Record<keyof never, unknown>>(record: T): State<{ [K in keyof T]: ExtractGetable<T[K]> }>
   export function collect(arg1: any): unknown {
     if (arg1 instanceof Array) {
@@ -130,9 +227,9 @@ export namespace State {
     }
 
     const result = {} as any
-    const recordFlow = new State(result)
+    const record = new State(result)
 
-    for (const key of Object.keys(arg1)) {
+    for (const key in arg1) {
       const value = arg1[key]
       if (isObservableGetter(value) === false) {
         result[key] = value
@@ -142,13 +239,19 @@ export namespace State {
       result[key] = value.get()
       State.subscribe(value, it => {
         result[key] = it
-        recordFlow.set(result)
+        record.set(result)
       })
     }
 
-    return recordFlow as never
+    return record
   }
 
+  /**
+   * Formats a string from Signal-like values into one.
+   * 
+   * @example
+   * const state = State.f`My name is ${name}`
+   */
   export function f(strings: TemplateStringsArray, ...values: unknown[]): State<string> {
     return State.combine(values, (...values) => strings.map((string, i) => string + String(values[i] ?? "")).join(""))
   }

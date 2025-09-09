@@ -1,10 +1,11 @@
+import { RefReadonly } from "@/ValueReference"
+
 import { ClosureParticipant } from "./ClosureSignal"
 
 import { ObservableGetter, ReactiveSource } from "../Flow"
 import { Messager } from "../Messages"
 import { Observable, ObservableOptions, Subscriptable, Unsubscribe } from "../types"
 import { isObservableGetter, isObservableLike } from "../utils"
-import { RefReadonly } from "../ValueReference"
 
 
 export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T> {
@@ -12,6 +13,7 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
   protected messager = new Messager<T>
   protected value: T
 
+  /** Retrieves current `value` without side-effects. Alias to `get`. */
   get current() { return this.value }
 
   constructor(initialValue: T) { this.value = initialValue }
@@ -30,7 +32,9 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
     return this.value
   }
 
+  /** Retrieves current `value` without side-effects. */
   get(): T { return this.value }
+  /** Sets given `newValue` or transforms current version of `value`, propagates updates to subscribers. */
   set(newValue: T | ((current: T) => T)): void {
     const value = newValue instanceof Function ? newValue(this.value) : newValue
 
@@ -39,6 +43,7 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
     this.closureParticipant.dispatch()
   }
 
+  /** Invokes `callback` when `observable` updates. */
   subscribe(callback: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(callback, options) }
   [Symbol.subscribe](next: (value: T) => void, options?: ObservableOptions) { return this.messager.subscribe(next, options) }
 
@@ -48,6 +53,7 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
 
 
 export namespace Signal {
+  /** Invokes `callback` when `observable` updates. */
   export function subscribe<T>(observable: ReactiveSource<T>, callback: (value: T) => void, options?: ObservableOptions): Unsubscribe
   export function subscribe(value: unknown, callback: (value: any) => void, options?: ObservableOptions): Unsubscribe {
     let unsubscribe: Unsubscribe = { unsubscribe: () => { } }
@@ -90,6 +96,7 @@ export namespace Signal {
     return value
   }
 
+  /** Unwraps reactivity source. @returns current value of `value`. */
   export function get<T>(value: ReactiveSource<T>): T {
     if (value instanceof Function) return value()
     if (value instanceof Object) {
