@@ -160,6 +160,7 @@ export namespace State {
   export function from<T>(item: ObservableGetter<T>): State<T>
   /** No initial value, but subscribes to future updates. */
   export function from<T>(item: Observable<T> | Subscriptable<T>): State<T | undefined>
+  export function from<T>(item: StateOrPlain<T>): State<T>
   /** Copies initial value. */
   export function from<T>(item: T): State<T>
   export function from<T>(item: StateOrPlain<T>): State<T> {
