@@ -83,6 +83,20 @@ app.$.user.$.name.subscribe(console.log) // Logs `app.user.name` changes.
 app.$.user === app.$.user // true
 ```
 
+## `State` Static methods
+
+|Method|Description|
+|------|-----------|
+|`State.capture`|Captures every `use()` that appear in the closure and subscribes to their updates produces new value.|
+|`State.collect`|Finds all (shallow) values in `Record` or `Array` and outputs it but with unwrapped values as a `State`.|
+|`State.combine`|Reduces many states into one with a strategy.|
+|`State.f`|Builds a string state from string template of observables.|
+|`State.from`|Creates `State` from a value.|
+|`State.get`|Unwraps any Signal-like structure.|
+|`State.subscribe`|Subscribes to any Signal-like structure.|
+|`State.subscribeImmediate`|Subscribes to any Signal-like structure and invokes `callback` immediately once.|
+|`State.use`|Uses any Signal-like structure as `ClosureSignal` - can be used in `State.capture`.|
+
 ## `StateArray`
 
 An array representation of `State`, it has more convenient `at` and `push` methods, and new one `delete`.
