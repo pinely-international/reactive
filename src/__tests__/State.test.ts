@@ -117,4 +117,21 @@ describe("State", () => {
     const upcoming = await state.upcoming
     expect(upcoming).toBe(1)
   })
+
+  it("should set from transformed source (sets)", async () => {
+    const pointerX = new State(0)
+    const event = new State({ x: 0 })
+
+    event.sets(pointerX.from(event => event.x))
+    event.set({ x: 1 })
+    expect(pointerX.current).toBe(1)
+  })
+  it("should set from transformed source (subscribe)", async () => {
+    const pointerX = new State(0)
+    const event = new State({ x: 0 })
+
+    event.subscribe(pointerX.from(event => event.x))
+    event.set({ x: 1 })
+    expect(pointerX.current).toBe(1)
+  })
 })

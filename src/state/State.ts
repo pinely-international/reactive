@@ -101,19 +101,29 @@ export class State<T> extends Signal<T> {
   }
 
   /**
-   * Useful when you want to fit a "source" (or "sink") to the state:
+   * Useful when you want to fit a "source" ("sink") to the state.
+   * By providing `predicate` function, the source value can transformed and set automatically.
    * 
    * @example
-   *  ```ts
-   *  const value = new State("text")
-   *  const event = new State<Event>()
-   *  event.sets(value.from(event => event.currentTarget.value))
-   *  ```
+   * ```ts
+   * const pointerX = new State(0)
+   * 
+   * window.addEventListener("pointermove", pointerX.from(event => event.x)) // Or
+   * window.when("pointermove").subscribe(pointerX.from(event => event.x))
+   * 
+   * const event = new State(new PointerEvent(""))
+   * 
+   * event.sets(pointerX.from(event => event.x)) // Or
+   * event.subscribe(pointerX.from(event => event.x))
+   * ```
    * 
    * This literally says "`event` sets `value` from `event.currentTarget.value`".
   */
-  from<U>(predicate: (value: U extends (v: infer R) => any ? R : U) => T): AccessorSet<U> {
-    return { set: value => this.set(predicate(value as never)) }
+  from<U>(predicate: (value: U extends (v: infer R) => any ? R : U) => T): StateSourcing<U> {
+    const sourcing = (value: U) => this.set(predicate(value as never))
+    sourcing.set = sourcing
+    sourcing.next = sourcing
+    return sourcing
   }
 
   /**
@@ -284,4 +294,11 @@ export namespace State {
 
     return new State(State.get(item as T))
   }
+}
+
+/** @internal */
+interface StateSourcing<T> {
+  (value: T): void
+  set(value: T): void
+  next(value: T): void
 }

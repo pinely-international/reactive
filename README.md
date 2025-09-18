@@ -63,9 +63,13 @@ It exposes `set` method that hooks to places where Signal-like structures requir
 It is useful when you want to fit "source" (or "sink") from where a new value is coming to a desired one:
 
 ```ts
-const value = new State("text")
-const event = new State<Event>()
-event.sets(value.from(event => event.currentTarget.value))
+const pointerX = new State(0)
+
+window.addEventListener("pointermove", pointerX.from(event => event.x))
+window.when("pointermove").subscribe(pointerX.from(event => event.x))
+
+const event = new State(new PointerEvent(""))
+event.sets(pointerX.from(event => event.x))
 ```
 
 This literally says "`event` sets `value` from `event.currentTarget.value`".
