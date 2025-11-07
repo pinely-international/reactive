@@ -294,6 +294,12 @@ export namespace State {
 
     return new State(State.get(item as T))
   }
+
+  export async function* asyncIterableOf<T>(state: State<Promise<T>>): AsyncGenerator<T> {
+    yield await state.get()
+    // Temporal solution, it should be improved when `Proton` and `State` have lifecycle APIs.
+    while (true) yield await state.upcoming
+  }
 }
 
 /** @internal */
