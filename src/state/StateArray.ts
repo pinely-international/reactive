@@ -55,8 +55,8 @@ export namespace StateArray {
     Signal.subscribe(init, value => state.set(value ?? []))
     return state
   }
-  export function fromAsync<T>(init: ReactiveSource<Promise<T[]>>) {
-    const state = new StateArray
+  export function fromAsync<T>(init: ReactiveSource<Promise<T[]>>): StateArray<T> {
+    const state = new StateArray<T>()
 
     State.subscribeImmediate(init, value => {
       Promise.resolve(value).then(x => state.set((x as any) ?? []))
