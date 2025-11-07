@@ -1,10 +1,11 @@
+import { Signal } from "@/signal/Signal"
+
 import { State } from "./State"
 
 import { ReactiveSource } from "../Flow"
-import { Signal } from "../signal/Signal"
 
 
-export class StateArray<T> extends State<T[]> implements Iterable<T> {
+export class StateArray<T> extends Signal<T[]> implements Iterable<T> {
   constructor(init: ReactiveSource<T[]> = []) {
     super(Signal.get(init))
     Signal.subscribe(init, value => this.set(value))
@@ -46,4 +47,21 @@ export class StateArray<T> extends State<T[]> implements Iterable<T> {
   }
 
   *[Symbol.iterator]() { yield* this.value }
+}
+
+export namespace StateArray {
+  export function from<T>(init: ReactiveSource<T[] | null | undefined>) {
+    const state = new StateArray(Signal.get(init) ?? [])
+    Signal.subscribe(init, value => state.set(value ?? []))
+    return state
+  }
+  export function fromAsync<T>(init: ReactiveSource<Promise<T[]>>) {
+    const state = new StateArray
+
+    State.subscribeImmediate(init, value => {
+      Promise.resolve(value).then(x => state.set((x as any) ?? []))
+    })
+
+    return state
+  }
 }
