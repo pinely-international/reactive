@@ -35,7 +35,7 @@ export class Signal<T> implements RefReadonly<T>, Observable<T>, Subscriptable<T
   /** Retrieves current `value` without side-effects. */
   get(): T { return this.value }
   /** Sets given `newValue` or transforms current version of `value`, propagates updates to subscribers. */
-  set(newValue: T | ((current: T) => T)): void {
+  set<U extends T>(newValue: U | ((current: T) => T)): void {
     const value = newValue instanceof Function ? newValue(this.value) : newValue
 
     this.value = value

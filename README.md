@@ -1,5 +1,7 @@
 # Reactive
 
+Signal-based Reactive Data Modeling and Management.
+
 This is a Reactivity Primitives Library, a uniform system that tries to comprehend industry standards.
 It supports two kind of `Signal`s ([`EventSignal`](https://github.com/FrameMuse/event-signal) and [`ClosureSignal`](https://github.com/FrameMuse/closure-signal)), gives utils to ease reactivity rather than piping.
 

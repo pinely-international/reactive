@@ -18,7 +18,7 @@ export class EventSignal<T> implements RefReadonly<T>, Observable<T> {
     this.messager.dispatch(value)
   }
 
-  subscribe(callback: (value: T) => void) { return this[Symbol.subscribe](callback) }
+  subscribe(next: (value: T) => void) { return this.messager.subscribe(next) }
   [Symbol.subscribe](next: (value: T) => void) { return this.messager.subscribe(next) }
 
   protected toJSON() { return this.value }
