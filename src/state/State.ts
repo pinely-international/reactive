@@ -138,19 +138,19 @@ export class State<T> extends Signal<T> {
    * 
    * @returns a hook to be used by another program. Is not intended to be transformed after.
    */
-  is<O extends Primitive>(other: T | O): AccessorGet<boolean> & Observable<boolean>
-  is(other: ObservableGetter<unknown>): AccessorGet<boolean> & Observable<boolean>
-  is(predicate: (value: T) => boolean): AccessorGet<boolean> & Observable<boolean>
-  is<U extends T>(arg1: ((value: T) => value is U) | ObservableGetter<unknown> | U): AccessorGet<boolean> & Observable<boolean> {
+  is<O extends Primitive>(other: T | O): AccessorGet<boolean> & Subscriptable<boolean>
+  is(other: ObservableGetter<unknown>): AccessorGet<boolean> & Subscriptable<boolean>
+  is(predicate: (value: T) => boolean): AccessorGet<boolean> & Subscriptable<boolean>
+  is<U extends T>(arg1: ((value: T) => value is U) | ObservableGetter<unknown> | U): AccessorGet<boolean> & Subscriptable<boolean> {
     if (arg1 instanceof Function) {
-      return { get: () => arg1(this.value), [Symbol.subscribe]: next => this.messager.subscribe(value => next(arg1(value))) }
+      return { get: () => arg1(this.value), subscribe: next => this.messager.subscribe(value => next(arg1(value))) }
     }
 
     return State.combine([this, arg1], (value, arg1) => value === arg1).readonly
   }
 
-  get readonly(): AccessorGet<T> & Observable<T> {
-    return { get: this.get.bind(this), [Symbol.subscribe]: this[Symbol.subscribe].bind(this) }
+  get readonly(): AccessorGet<T> & Subscriptable<T> {
+    return { get: this.get.bind(this), subscribe: this.subscribe.bind(this) }
   }
   get writeonly(): AccessorSet<T> {
     return { set: this.set.bind(this) }
