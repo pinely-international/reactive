@@ -10,8 +10,17 @@ It supports two kind of `Signal`s ([`EventSignal`](https://github.com/FrameMuse/
 ### Quick Peek
 
 ```ts
+import { State, StateArray, Notifier } from "@denshya/reactive"
+
 const blog = {
-  articles: new StateArray([{ title: "", description: "" }]),
+  articles: new StateArray([{
+    title: "",
+    description: ""
+  }]),
+  user: new State({
+    id: 1,
+    name: "FrameMuse"
+  })
   admin: {
     enabled: new State(false),
     save: new Notifier,
@@ -19,23 +28,32 @@ const blog = {
   }
 }
 
+blog.articles.push({
+  title: "How to use `Reactive`",
+  description: "Follow our guides..."
+})
+
 blog.admin.enabled.set(true) // Active admin UI.
 blog.admin.save.dispatch() // Buttons triggers saving.
 
-blog.articles.push(...)
+blog.user.set({ id: 2, name: "Denshya" }) // Replace user.
+blog.user.$.name.set("Reactive") // Partial change.
+
 ```
 
 > [!Note]
 > Updating a state doesn't cause updates to other ones.
 
 > [!Tip]
-> It's similar but more powerful than https://tanstack.com/store/latest/docs/overview
+> It's similar but more powerful than <https://tanstack.com/store/latest/docs/overview>
 
-### `State` comprehends two types of `Signal` at once
+### `State` comprehends two types of `Signal`
 
 Using event-based signals
 
 ```ts
+import { State } from "@denshya/reactive"
+
 const balance = new State(0)
 const income = new State(100)
 const debt = new State(500)
@@ -49,6 +67,8 @@ const netWorth = balance.to(balance => balance - debt)
 Using closure-based ones
 
 ```ts
+import { State } from "@denshya/reactive"
+
 const balance = new State(0)
 const income = new State(100)
 const debt = new State(500)
@@ -75,6 +95,8 @@ It creates a new `State` instance, transforms the value and assign it to the new
 It is useful when you want to select a value, but save reactivity:
 
 ```ts
+import { State } from "@denshya/reactive"
+
 const ypx = new State("15px")
 const y = ypx.to(parseFloat)
 
@@ -89,6 +111,8 @@ It exposes `set` method that hooks to places where Signal-like structures requir
 It is useful when you want to fit "source" (or "sink") from where a new value is coming to a desired one:
 
 ```ts
+import { State } from "@denshya/reactive"
+
 const pointerX = new State(0)
 
 window.addEventListener("pointermove", pointerX.from(event => event.x))
@@ -103,6 +127,8 @@ This literally says "`event` sets `value` from `event.currentTarget.value`".
 ## Access properties
 
 ```ts
+import { State } from "@denshya/reactive"
+
 const app = new State({ user: { name: "test" } })
 // Regular Access
 app.get().user.name
@@ -116,6 +142,8 @@ app.$.user === app.$.user // true
 ## `State` Static methods
 
 ```ts
+import { State } from "@denshya/reactive"
+
 /** Captures every `use()` that appear in the closure and subscribes to their updates produces new value. */
 State.capture(() => state1.use() + state2.use())
 /** Combines several state-like values into one with a strategy. */
@@ -143,6 +171,8 @@ State.subscribeImmediate(signalLike, () => {...})
 An array representation of `State`, it has more convenient `at` and `push` methods, and new one `delete`.
 
 ```ts
+import { State, StateArray } from "@denshya/reactive"
+
 const array = new StateArray([1,2,3])
 array.subscribe(console.log) // Logs `array` changes.
 
@@ -160,11 +190,53 @@ console.log(array.get()) // [1,2,4,5]
 
 However, you can still use `State` with arrays by using `$[index]`, it will still work but not so comfortable.
 
+## `StateFSM`
+
+Finite State Machine, based on `Signal` and `Emitter`.
+
+```ts
+const character = {
+  state: new StateFSM<"idle" | "walking" | "running">("idle")
+}
+
+state.when("idle").subscribe(() => {...})
+state.when("walking").subscribe(() => {...})
+state.subscribe(state => state === "idle" && idle())
+state.set("walking")
+```
+
+## Third-part Sourcing
+
+If reactive source is third-party, you can use `.from` method that is present on many class constructors
+like `State`, `StateArray`, etc. to convert the third-party to canonical.
+
+Something like `StateArray.from(state)` can be used to copy values too.
+
+```ts
+const someState = new State([1,2,3])
+const stateArray = StateArray.from(someState) // => [1,2,3]
+```
+
+```ts
+import { State } from "@denshya/reactive"
+
+const state = State.from({
+  #value: 1,
+  subscribe(next: (value: number) => void) {
+    const id = setInterval(() => next(this.#value + 1), 1000)
+    return () => clearInterval(id)
+  }
+})
+state // => `State` instance.
+```
+
 ## Serialization
 
 `State` (and other) has hidden `toJSON` method, which outputs actual value for serialization.
 
 ```ts
+import { State, StateArray } from "@denshya/reactive"
+
 const bool = new State(true)
 const string = new State("text")
 const record = new State({foo:"bar"})
@@ -184,6 +256,21 @@ JSON.stringify({ bool, string, record, array })
 }
 ```
 
+## Unsubscribing
+
+All subscriptions follow [WICG Observable API proposal](https://github.com/WICG/observable) and thus return object (record) with callback to unsubscribe.
+
+```ts
+const state = new State(123)
+const subscription = state.subscribe(() => {...})
+
+subscription.unsubscribe()
+```
+
+However, this library handles multiple variations of subscriptions/unsubscribe if it's reasonable.
+e.g. `State.subscribe(signalLike, () => {...})` will return `subscription` just like in the example above,
+even if `signalLike.subscribe` returns different one.
+
 ## Other Primitives
 
 ### `Messager`
@@ -199,6 +286,8 @@ Is a `Messager` but only for empty messages. Use for semantics.
 A key-based event messager, usually known as Event Emitter.
 
 ```ts
+import { Emitter } from "@denshya/reactive"
+
 interface Events {
   add(id: number): void
 }
