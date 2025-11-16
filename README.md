@@ -7,7 +7,31 @@ It supports two kind of `Signal`s ([`EventSignal`](https://github.com/FrameMuse/
 
 ## Getting Started with `State`
 
-**`State` comprehends two types of `Signal` at once, giving the same result:**
+### Quick Peek
+
+```ts
+const blog = {
+  articles: new StateArray([{ title: "", description: "" }]),
+  admin: {
+    enabled: new State(false),
+    save: new Notifier,
+    cancel: new Notifier,
+  }
+}
+
+blog.admin.enabled.set(true) // Active admin UI.
+blog.admin.save.dispatch() // Buttons triggers saving.
+
+blog.articles.push(...)
+```
+
+> [!Note]
+> Updating a state doesn't cause updates to other ones.
+
+> [!Tip]
+> It's similar but more powerful than https://tanstack.com/store/latest/docs/overview
+
+### `State` comprehends two types of `Signal` at once
 
 Using event-based signals
 
