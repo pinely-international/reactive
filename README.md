@@ -115,17 +115,28 @@ app.$.user === app.$.user // true
 
 ## `State` Static methods
 
-|Method|Description|
-|------|-----------|
-|`State.capture`|Captures every `use()` that appear in the closure and subscribes to their updates produces new value.|
-|`State.collect`|Finds all (shallow) values in `Record` or `Array` and outputs it but with unwrapped values as a `State`.|
-|`State.combine`|Reduces many states into one with a strategy.|
-|`State.f`|Builds a string state from string template of observables.|
-|`State.from`|Creates `State` from a value.|
-|`State.get`|Unwraps any Signal-like structure.|
-|`State.subscribe`|Subscribes to any Signal-like structure.|
-|`State.subscribeImmediate`|Subscribes to any Signal-like structure and invokes `callback` immediately once.|
-|`State.use`|Uses any Signal-like structure as `ClosureSignal` - can be used in `State.capture`.|
+```ts
+/** Captures every `use()` that appear in the closure and subscribes to their updates produces new value. */
+State.capture(() => state1.use() + state2.use())
+/** Combines several state-like values into one with a strategy. */
+State.combine([state1, state2], (state1, state2) => state1 + state2)
+/** Finds all (shallow) values in `Record` or `Array` and outputs it `State` with unwrapped values. */
+State.collect([state1, state2]) // Reduces to e.g. `State<[number, number]>` from `[State<number>, State<number>]`
+State.collect({ foo: state1, bar: state2 }) // Reduces to `State<{ foo: number, bar: number }>`
+
+/** Builds a string state from string template of observables. */
+State.f`display: ${style.$.display}; opacity: ${1}`
+/** Creates `State` from a plain value or forks from existing one. */
+State.from(...)
+/** Unwraps any Signal-like structure. */
+State.get(...)
+/** Uses any Signal-like structure (even third-party) as `ClosureSignal` - can be used in `State.capture`. */
+State.use(signalLike)
+/** Subscribes to any Signal-like structure. */
+State.subscribe(signalLike, () => {...})
+/** Subscribes to any Signal-like structure and invokes `callback` immediately once. */
+State.subscribeImmediate(signalLike, () => {...})
+```
 
 ## `StateArray`
 
