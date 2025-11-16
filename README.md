@@ -20,7 +20,7 @@ const blog = {
   user: new State({
     id: 1,
     name: "FrameMuse"
-  })
+  }),
   admin: {
     enabled: new State(false),
     save: new Notifier,
