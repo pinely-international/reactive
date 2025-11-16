@@ -31,7 +31,7 @@ export class Emitter<EventMap extends Record<EventName, unknown>, EventName exte
     })
   }
 
-  public dispatch<Event extends keyof EventMap>(event: Event, payload: EventMap[Event]) {
+  public dispatch<Event extends keyof EventMap>(event: Event, ...payload: EventMap[Event] extends never ? [] : [EventMap[Event]]) {
     this.callbacks[event]?.forEach(callback => callback(payload))
     this.callbacksAny.forEach(callback => callback(this))
   }
